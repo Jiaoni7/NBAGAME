@@ -1,47 +1,47 @@
-# Release Checklist
+# 发布检查清单
 
-Use this checklist before any public release, preview build, or store submission.
+在任何公开发布、预览构建或应用商店提交流程前，都应过一遍这份清单。
 
-## 1. Repository Hygiene
+## 1. 仓库卫生
 
-- [ ] `git status` is understood
-- [ ] no private local-only assets are staged
-- [ ] no personal scripts, prompts, or research notes are included
-- [ ] no temporary logs or machine-specific files are included
+- [ ] 已看过并理解 `git status`
+- [ ] 没有把本地私有资产加入暂存区
+- [ ] 没有包含个人脚本、提示词或私有调研内容
+- [ ] 没有包含临时日志或机器专属文件
 
-## 2. App Verification
+## 2. 应用验证
 
-- [ ] the web game launches locally
-- [ ] core game flow works at least once
-- [ ] no obvious console-breaking errors remain
-- [ ] save/load behavior was sanity-checked if touched
+- [ ] 网页游戏可以在本地正常启动
+- [ ] 核心游戏流程至少完整跑过一次
+- [ ] 没有明显会导致页面报错的前端问题
+- [ ] 如果本次改动涉及存档，已手工检查存档 / 读档行为
 
-## 3. Web / PWA Checks
+## 3. Web / PWA 检查
 
-- [ ] `manifest.webmanifest` is up to date
-- [ ] `sw.js` behavior was checked after recent asset changes
-- [ ] icons referenced by the app are present
-- [ ] cache-sensitive files were reviewed when shipping updates
+- [ ] `manifest.webmanifest` 已与当前版本保持一致
+- [ ] 最近改动后已检查 `sw.js` 的缓存行为
+- [ ] 应用引用到的图标资源都存在
+- [ ] 如果本次会发布更新，已检查缓存敏感文件是否需要同步调整
 
-## 4. Capacitor / Android Checks
+## 4. Capacitor / Android 检查
 
-- [ ] `npm run www` succeeds
-- [ ] `npm run sync` succeeds
-- [ ] Android project opens correctly when needed
-- [ ] debug/release target is explicitly chosen
-- [ ] signing setup is verified for release builds
+- [ ] `npm run www` 执行成功
+- [ ] `npm run sync` 执行成功
+- [ ] 需要时 Android 工程可以正常打开
+- [ ] 已明确本次是 debug 还是 release 目标
+- [ ] 如果是 release 构建，已确认签名配置正确
 
-## 5. Product Surface
+## 5. 产品表面检查
 
-- [ ] version / release notes are accurate
-- [ ] obvious placeholder content is removed
-- [ ] pricing, rewards, and event data were sanity-checked if changed
-- [ ] user-facing text changed in this release was reviewed
+- [ ] 版本信息 / 发布说明准确
+- [ ] 明显的占位内容已经移除
+- [ ] 如果本次改了价格、奖励、活动数据，已经过基本核对
+- [ ] 本次改动涉及的用户可见文案已经检查
 
-## 6. Final Review
+## 6. 最终复查
 
-- [ ] diff was reviewed one more time before push
-- [ ] commit messages are understandable
-- [ ] docs changed with the implementation where needed
-- [ ] project status and changelog reflect the current release state
-- [ ] release artifacts come from the intended branch
+- [ ] push 前又看过一遍 diff
+- [ ] commit message 可读且能说明改动目的
+- [ ] 本次实现涉及的文档已经同步更新
+- [ ] `project-status` 与 `changelog` 已反映当前发布状态
+- [ ] 发布产物来自预期分支

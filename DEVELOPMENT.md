@@ -1,22 +1,22 @@
-# Development Guide
+# 开发规范
 
-## Goals
+## 目标
 
-Keep `main` close to runnable, protect private working assets, and make every change easy to review.
+让 `main` 尽量保持可运行，保护本地私有工作资产，并让每次改动都容易审阅、容易回溯。
 
-## Branch Strategy
+## 分支策略
 
-- `main`: stable integration branch, should remain runnable
-- `feat/<name>`: new features
-- `fix/<name>`: bug fixes
-- `docs/<name>`: documentation-only changes
-- `chore/<name>`: maintenance, cleanup, tooling
+- `main`：稳定集成分支，应尽量保持可运行
+- `feat/<name>`：新功能
+- `fix/<name>`：问题修复
+- `docs/<name>`：纯文档改动
+- `chore/<name>`：维护、清理、工具调整
 
-Create branches from `main` and merge only after local verification.
+默认从 `main` 切分支，完成本地验证后再合并。
 
-## Commit Style
+## 提交风格
 
-Use short conventional prefixes:
+使用简短前缀：
 
 - `feat:`
 - `fix:`
@@ -24,7 +24,7 @@ Use short conventional prefixes:
 - `chore:`
 - `refactor:`
 
-Examples:
+示例：
 
 ```text
 feat: add season rewards balancing
@@ -32,95 +32,97 @@ fix: correct offline income cap
 docs: add release checklist
 ```
 
-## Local-Only Assets
+## 仅限本地的私有资产
 
-The following are considered private working assets and must stay out of git:
+下面这些都属于私有工作资产，不应进入 git：
 
 - `skills/`
 - `.codex/`
 - `.claude/`
 - `notes-private/`
 - `research-private/`
-- local prompts, audits, internal strategy notes
-- personal scripts, local tunnels, temporary logs
+- 本地提示词、审计草稿、内部策略笔记
+- 个人脚本、本地隧道脚本、临时日志
 
-Project-specific `skills.md` files are allowed for local use, but they must live inside ignored directories rather than public repository paths.
+项目特化的 `skills.md` 可以本地使用，但必须放在被忽略的目录中，不能放在公开仓库路径下。
 
-## Daily Workflow
+## 日常工作流
 
-1. Start from a clean understanding of the branch:
+1. 先确认当前分支状态：
    - `git status`
-   - `git pull --ff-only origin main` when appropriate
-2. Create a focused branch.
-3. Make the change.
-4. Run the relevant local checks.
-5. Review `git diff` and `git status` before commit.
-6. Confirm no private files are included.
-7. Commit with a clear message.
+   - 需要时执行 `git pull --ff-only origin main`
+2. 创建聚焦分支
+3. 进行改动
+4. 运行相关本地检查
+5. 提交前查看 `git diff` 和 `git status`
+6. 确认没有混入私有文件
+7. 写清楚 commit message
 
-For the current fork-based collaboration model, also refer to:
+当前 fork 协作模式的详细流程见：
 
 - `docs/git-workflow.zh-CN.md`
 
-When the friend's repository is treated as the upstream mainline, prefer:
+如果朋友的仓库被视为上游主线，优先采用：
 
-1. work on a branch in `origin`
-2. push the branch to `origin`
-3. create a Pull Request from `origin` to `upstream`
-4. merge to the upstream mainline only after review
+1. 在 `origin` 的分支上开发
+2. 把分支 push 到 `origin`
+3. 从 `origin` 向 `upstream` 发 Pull Request
+4. 审核通过后再合入上游主线
 
-## Documentation Workflow
+## 文档工作流
 
-For non-trivial work, do not rely on commit history alone.
+只靠 commit history 不足以支撑非小型改动。
 
-Before implementation:
+开始实施前：
 
-- create a design note in `docs/superpowers/specs/` when the work changes structure or behavior
-- create a plan in `docs/superpowers/plans/` when the work needs task breakdown and execution tracking
+- 如果会改结构或行为，先在 `docs/superpowers/specs/` 写设计说明
+- 如果需要任务拆分和执行跟踪，先在 `docs/superpowers/plans/` 写计划
 
-After implementation:
+实施完成后：
 
-- update `docs/project-status.zh-CN.md` if the project phase, current focus, or known risks changed
-- update `docs/changelog.zh-CN.md` for meaningful project milestones
-- archive formal audit results under `docs/audits/`
+- 如果项目阶段、当前重点或已知风险变化，更新 `docs/project-status.zh-CN.md`
+- 如果属于值得记录的阶段性成果，更新 `docs/changelog.zh-CN.md`
+- 如果做了正式审计，把结果归档到 `docs/audits/`
 
-Use `docs/README.zh-CN.md` as the public index for these documents.
+这些文档的公开入口在：
 
-## Minimum Checks Before Commit
+- `docs/README.zh-CN.md`
 
-- The game still launches locally.
-- The modified flow works at least once end to end.
-- No local-only files or logs were staged.
-- Docs were updated if behavior, commands, or structure changed.
-- Status / plan / audit docs were updated when the change was substantial.
+## 提交前最少检查
 
-## File Organization Rules
+- 游戏仍能在本地启动
+- 改动相关流程至少完整跑过一次
+- 暂存区里没有本地私有文件或日志
+- 如果行为、命令或结构变化了，文档已同步更新
+- 如果这次改动较大，状态 / 计划 / 审计文档也已经同步
 
-- Keep public project files in repo-visible paths only.
-- Put reusable scripts under `scripts/`.
-- Put stable public docs under `docs/`.
-- Do not store product research, prompts, or private operating notes in the repository root.
+## 文件组织规则
 
-## Review Expectations
+- 公开项目文件只放在仓库可见路径
+- 可复用脚本放在 `scripts/`
+- 稳定的公开文档放在 `docs/`
+- 产品调研、提示词、私有操作笔记不要散落在仓库根目录
 
-Before merging to `main`, review for:
+## 代码审阅时重点看什么
 
-- accidental leakage of private workflow assets
-- broken commands or stale docs
-- debug leftovers
-- unnecessary unrelated file changes
+合并到 `main` 前，重点检查：
 
-## Syncing with Upstream
+- 是否误泄露私有工作资产
+- 命令或文档是否已经过期
+- 是否留有调试残留
+- 是否混入无关改动
 
-This repository has:
+## 与上游仓库同步
 
-- `origin`: personal fork / primary push target
-- `upstream`: original project repository
+当前仓库有两个远端：
 
-Recommended flow:
+- `origin`：你的个人 fork，也是主要 push 目标
+- `upstream`：原始项目仓库
+
+推荐流程：
 
 1. `git fetch upstream`
-2. inspect incoming changes
-3. integrate on a working branch first
-4. verify locally
-5. merge into `main` only after the branch is stable
+2. 先看清楚上游变化
+3. 优先在工作分支上做整合
+4. 本地验证
+5. 确认稳定后再合并回 `main`

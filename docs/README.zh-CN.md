@@ -63,6 +63,19 @@
 3. 做完值得对外说明的改动后，更新 `changelog.zh-CN.md`
 4. 做完正式审计后，在 `docs/audits/` 新增一份记录，并同步状态文档
 
+## 语言约定
+
+当前团队高频使用的内部工程文档，默认采用中文优先：
+
+- `DEVELOPMENT.md`
+- `CONTRIBUTING.md`
+- `docs/release-checklist.md`
+- `docs/git-workflow.zh-CN.md`
+- `docs/project-status.zh-CN.md`
+- `docs/changelog.zh-CN.md`
+
+对外说明文档可以根据需要保留英文或后续补充双语版本。
+
 ## 不放进仓库的内容
 
 下面这些仍然属于本地私有工作资产：

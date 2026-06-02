@@ -1,27 +1,27 @@
-# Contributing
+# 贡献说明
 
-Thanks for contributing.
+感谢参与这个项目。
 
-This project is currently maintained as a small-team game repository. External contributions are welcome when they are focused, reviewable, and do not include private workflow material.
+当前项目主要按“小团队游戏仓库”的方式维护。欢迎外部贡献，但改动应尽量聚焦、便于审阅，并且不要混入私有工作材料。
 
-## Before You Start
+## 开始前
 
-- Read [README.md](README.md)
-- Read [DEVELOPMENT.md](DEVELOPMENT.md)
-- Keep changes scoped to one purpose when possible
+- 阅读 [README.md](README.md)
+- 阅读 [DEVELOPMENT.md](DEVELOPMENT.md)
+- 尽量让一次改动只服务一个主要目的
 
-## Branch Naming
+## 分支命名
 
-Use one of:
+使用以下前缀之一：
 
 - `feat/<name>`
 - `fix/<name>`
 - `docs/<name>`
 - `chore/<name>`
 
-## Commit Messages
+## 提交信息
 
-Use concise prefixes:
+使用简短前缀：
 
 - `feat:`
 - `fix:`
@@ -29,26 +29,26 @@ Use concise prefixes:
 - `chore:`
 - `refactor:`
 
-## Pull Request Expectations
+## Pull Request 要求
 
-- Explain what changed and why.
-- Mention any manual verification performed.
-- Keep unrelated cleanup out of the same PR.
-- Update docs when commands, structure, or contributor workflow changed.
+- 说明改了什么，以及为什么改
+- 写明做过哪些手工验证
+- 不要把无关清理混进同一个 PR
+- 如果命令、结构或协作流程变了，要同步更新文档
 
-## Do Not Commit
+## 不要提交的内容
 
-- `skills/` or project-specific local skill files
-- `.codex/`, `.claude/`
-- private prompts, research notes, internal audit notes
-- local logs, caches, temporary files
-- personal tunnel scripts or machine-specific paths
+- `skills/` 或项目特化的本地 skill 文件
+- `.codex/`、`.claude/`
+- 私有提示词、调研笔记、内部审计草稿
+- 本地日志、缓存、临时文件
+- 个人隧道脚本或机器专属路径
 
-## Review Focus
+## 审阅重点
 
-Reviewers should prioritize:
+审阅时优先关注：
 
-- correctness
-- regressions
-- repo hygiene
-- accidental exposure of local-only assets
+- 正确性
+- 回归风险
+- 仓库卫生
+- 是否意外暴露本地私有资产
