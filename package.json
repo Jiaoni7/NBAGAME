@@ -1,0 +1,22 @@
+{
+  "name": "nba-dynasty-legend",
+  "version": "1.0.0",
+  "description": "王朝传奇 - NBA 球队经营放置游戏（Web + Capacitor 安卓 APK 封装）",
+  "private": true,
+  "scripts": {
+    "www": "node scripts/copy-www.js",
+    "serve": "node scripts/copy-www.js && npx --yes http-server www -p 8123 -c-1",
+    "cap:init": "cap init \"王朝传奇\" com.dynasty.legend --web-dir=www",
+    "android:add": "npm run www && cap add android",
+    "sync": "npm run www && cap sync",
+    "open:android": "cap open android",
+    "build:apk": "npm run sync && cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

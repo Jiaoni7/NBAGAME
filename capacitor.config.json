@@ -1,0 +1,9 @@
+{
+  "appId": "com.dynasty.legend",
+  "appName": "王朝传奇",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true
+  }
+}
