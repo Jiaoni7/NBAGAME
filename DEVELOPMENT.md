@@ -62,6 +62,13 @@ For the current fork-based collaboration model, also refer to:
 
 - `docs/git-workflow.zh-CN.md`
 
+When the friend's repository is treated as the upstream mainline, prefer:
+
+1. work on a branch in `origin`
+2. push the branch to `origin`
+3. create a Pull Request from `origin` to `upstream`
+4. merge to the upstream mainline only after review
+
 ## Documentation Workflow
 
 For non-trivial work, do not rely on commit history alone.
