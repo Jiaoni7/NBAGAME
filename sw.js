@@ -1,5 +1,5 @@
 // Service Worker - 王朝传奇 PWA 离线缓存
-const CACHE = 'nba-dynasty-v2';
+const CACHE = 'nba-dynasty-v3';
 const ASSETS = [
   'index.html',
   'game.js',

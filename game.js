@@ -4,6 +4,161 @@
 // v2：多元资金玩法 / 可持续赛季运营 / 真实NBA球员 / 充值支付接口
 // ============================================================
 
+// ============================================================
+// 音效系统：Web Audio API 程序化合成（无外部音频文件 / 无第三方库 / 兼容 iOS）
+// 提供背景音乐 + 点击/投篮/签约/消耗/奖励/胜负等音效，音量与开关可在设置中调节
+// ============================================================
+const Sound = (() => {
+  'use strict';
+  const SET_KEY = 'nba_dynasty_settings';
+  const defaults = { musicOn: true, sfxOn: true, musicVol: 0.4, sfxVol: 0.6, quality: 'high', vibrate: true };
+  let settings = load();
+
+  function load() {
+    try { return Object.assign({}, defaults, JSON.parse(localStorage.getItem(SET_KEY) || '{}')); }
+    catch { return Object.assign({}, defaults); }
+  }
+  function save() { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch {} }
+  function get() { return settings; }
+  function set(k, v) {
+    settings[k] = v; save(); applyVolumes();
+    if (k === 'quality') applyQuality();
+  }
+
+  // ---------- AudioContext（首次手势时创建并恢复）----------
+  let ctx = null, masterGain = null, musicGain = null, sfxGain = null;
+  function ensureCtx() {
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try { ctx = new AC(); } catch { return null; }
+      masterGain = ctx.createGain(); masterGain.connect(ctx.destination);
+      musicGain = ctx.createGain(); musicGain.connect(masterGain);
+      sfxGain = ctx.createGain(); sfxGain.connect(masterGain);
+      applyVolumes();
+    }
+    if (ctx.state === 'suspended') { try { ctx.resume(); } catch {} }
+    return ctx;
+  }
+  function applyVolumes() {
+    if (musicGain) musicGain.gain.value = settings.musicOn ? settings.musicVol : 0;
+    if (sfxGain) sfxGain.gain.value = settings.sfxOn ? settings.sfxVol : 0;
+  }
+
+  // ---------- 基础合成 ----------
+  function tone(freq, dur, opt) {
+    opt = opt || {};
+    const c = ensureCtx(); if (!c || !settings.sfxOn) return;
+    const t0 = c.currentTime + (opt.delay || 0);
+    const osc = c.createOscillator(), g = c.createGain();
+    osc.type = opt.type || 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    if (opt.to) osc.frequency.exponentialRampToValueAtTime(opt.to, t0 + dur);
+    const peak = opt.gain == null ? 0.5 : opt.gain;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(peak, t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(sfxGain);
+    osc.start(t0); osc.stop(t0 + dur + 0.03);
+  }
+  function noise(dur, opt) {
+    opt = opt || {};
+    const c = ensureCtx(); if (!c || !settings.sfxOn) return;
+    const t0 = c.currentTime + (opt.delay || 0);
+    const len = Math.max(1, Math.floor(c.sampleRate * dur));
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource(); src.buffer = buf;
+    const f = c.createBiquadFilter();
+    f.type = opt.filter || 'bandpass'; f.frequency.value = opt.freq || 1200; f.Q.value = opt.q || 1;
+    const g = c.createGain();
+    const peak = opt.gain == null ? 0.4 : opt.gain;
+    g.gain.setValueAtTime(peak, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(f); f.connect(g); g.connect(sfxGain);
+    src.start(t0); src.stop(t0 + dur);
+  }
+
+  // ---------- 各类音效 ----------
+  const SFX = {
+    click()  { tone(660, 0.08, { type: 'triangle', gain: 0.32 }); },
+    shoot()  { noise(0.12, { filter: 'highpass', freq: 3200, gain: 0.22 }); tone(190, 0.13, { type: 'sine', to: 90, gain: 0.3, delay: 0.02 }); },
+    buy()    { [523, 659, 784].forEach((f, i) => tone(f, 0.12, { type: 'triangle', gain: 0.3, delay: i * 0.05 })); },
+    spend()  { tone(880, 0.09, { type: 'square', gain: 0.2 }); tone(587, 0.13, { type: 'square', gain: 0.18, delay: 0.06 }); },
+    coin()   { tone(988, 0.08, { type: 'square', gain: 0.24 }); tone(1319, 0.15, { type: 'square', gain: 0.2, delay: 0.06 }); },
+    reward() { [659, 784, 988, 1319].forEach((f, i) => tone(f, 0.13, { type: 'triangle', gain: 0.28, delay: i * 0.06 })); },
+    error()  { tone(165, 0.18, { type: 'sawtooth', gain: 0.22, to: 110 }); },
+    win()    { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.16, { type: 'triangle', gain: 0.3, delay: i * 0.06 })); },
+    lose()   { tone(330, 0.26, { type: 'sawtooth', gain: 0.2, to: 175 }); },
+    victory(){ [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.3, { type: 'triangle', gain: 0.33, delay: i * 0.11 })); noise(0.5, { filter: 'highpass', freq: 5000, gain: 0.1, delay: 0.1 }); },
+  };
+  function play(name) { if (SFX[name]) SFX[name](); }
+
+  // ---------- 背景音乐（程序化循环：C - G - Am - F 进行）----------
+  function mtof(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  const BPM = 92, stepDur = 60 / BPM / 2;       // 八分音符
+  const BASS_M  = [48,48,48,48, 43,43,43,43, 45,45,45,45, 41,41,41,41];
+  const CHORD_M = [[60,64,67],[60,64,67],[60,64,67],[60,64,67],
+                   [55,59,62],[55,59,62],[55,59,62],[55,59,62],
+                   [57,60,64],[57,60,64],[57,60,64],[57,60,64],
+                   [53,57,60],[53,57,60],[53,57,60],[53,57,60]];
+  const MEL_M   = [72,0,76,0, 74,0,79,0, 72,0,76,72, 77,0,72,0];
+  let musicTimer = null, musicOn = false, nextTime = 0, stepIdx = 0;
+
+  function mNote(freq, dur, t0, type, peak) {
+    if (!ctx || !musicGain) return;
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(peak, t0 + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(musicGain);
+    osc.start(t0); osc.stop(t0 + dur + 0.05);
+  }
+  function playMusicStep(i, when) {
+    mNote(mtof(BASS_M[i]), stepDur * 0.9, when, 'triangle', 0.5);
+    if (i % 4 === 0) CHORD_M[i].forEach(m => mNote(mtof(m), stepDur * 3.6, when, 'sine', 0.15));
+    if (MEL_M[i]) mNote(mtof(MEL_M[i]), stepDur * 1.6, when, 'triangle', 0.2);
+  }
+  function scheduler() {
+    if (!musicOn || !ctx) return;
+    while (nextTime < ctx.currentTime + 0.25) {
+      playMusicStep(stepIdx, nextTime);
+      nextTime += stepDur;
+      stepIdx = (stepIdx + 1) % 16;
+    }
+    musicTimer = setTimeout(scheduler, 60);
+  }
+  function startMusic() {
+    if (musicOn || !settings.musicOn) return;
+    const c = ensureCtx(); if (!c) return;
+    musicOn = true; stepIdx = 0; nextTime = c.currentTime + 0.1; scheduler();
+  }
+  function stopMusic() { musicOn = false; if (musicTimer) { clearTimeout(musicTimer); musicTimer = null; } }
+  function setMusic(on) { set('musicOn', on); if (on) startMusic(); else stopMusic(); }
+
+  // ---------- 首次手势解锁（满足浏览器/iOS 自动播放策略）----------
+  let unlocked = false;
+  function unlock() {
+    if (unlocked) return;
+    const c = ensureCtx(); if (!c) return;
+    unlocked = true;
+    if (settings.musicOn) startMusic();
+  }
+
+  // ---------- 画质 ----------
+  function applyQuality() {
+    const b = document.body; if (!b) return;
+    b.classList.remove('quality-low', 'quality-medium', 'quality-high');
+    b.classList.add('quality-' + (settings.quality || 'high'));
+  }
+  // ---------- 震动反馈 ----------
+  function vibrate(ms) { if (settings.vibrate && navigator.vibrate) { try { navigator.vibrate(ms); } catch {} } }
+
+  return { get, set, play, setMusic, startMusic, stopMusic, unlock, applyQuality, applyVolumes, vibrate };
+})();
+
 const App = (() => {
   'use strict';
 
@@ -528,6 +683,7 @@ const App = (() => {
       </span>`;
     html += `<button class="topbtn" onclick="App.openStore('recharge')">🛒 充值</button>`;
     if (gameMode === 'single') html += `<button class="topbtn" onclick="App.manualSave()">💾 保存</button>`;
+    html += `<button class="topbtn" onclick="App.openSettings()">⚙️ 设置</button>`;
     html += `<button class="topbtn" onclick="App.quitToMenu()">🚪 返回菜单</button>`;
     wrap.innerHTML = html;
   }
@@ -662,6 +818,7 @@ const App = (() => {
   function shoot(idx, ev) {
     const team = teams[idx];
     if (team.won) return;
+    Sound.play('shoot'); Sound.vibrate(8);
     const gain = clickValue(team);
     team.funds += gain; team.totalEarned += gain; team.stats.clicks++;
     floatPoint(ev, '+' + fmt(gain));
@@ -671,8 +828,9 @@ const App = (() => {
     const team = teams[idx];
     if (team.won) return;
     const cost = playerCost(team, posIdx);
-    if (team.funds < cost) return toast('资金不足');
+    if (team.funds < cost) { Sound.play('error'); return toast('资金不足'); }
     team.funds -= cost; team.players[posIdx].level++; team.stats.signs++;
+    Sound.play('buy'); Sound.vibrate(12);
     const lv = team.players[posIdx].level, p = playerAt(POSITIONS[posIdx].key, lv);
     if (p) pushLog(team, `✍️ ${POSITIONS[posIdx].name}签下了 ${p.cn} (#${p.no})！`, 'hl');
     else pushLog(team, `💪 ${POSITIONS[posIdx].name}训练强化 Lv.${lv}`, '');
@@ -682,8 +840,9 @@ const App = (() => {
     const team = teams[idx];
     if (team.won) return;
     const cost = facilityCost(team, key);
-    if (team.funds < cost) return toast('资金不足');
+    if (team.funds < cost) { Sound.play('error'); return toast('资金不足'); }
     team.funds -= cost; team.facilities[key]++;
+    Sound.play('buy'); Sound.vibrate(12);
     const f = FACILITIES.find(x => x.key === key);
     pushLog(team, `🏟️ ${f.name} 升级至 Lv.${team.facilities[key]}`, 'hl');
     refreshTeam(idx);
@@ -692,7 +851,7 @@ const App = (() => {
     const team = teams[idx];
     if (team.won) return;
     const now = Date.now();
-    if (now - team.lastMatchAt < MATCH_COOLDOWN) return toast('比赛冷却中');
+    if (now - team.lastMatchAt < MATCH_COOLDOWN) { Sound.play('error'); return toast('比赛冷却中'); }
     team.lastMatchAt = now; team.matches++; team.stats.matches++;
     const opp = pick(NBA_TEAMS) + '队';
     const myPow = teamPower(team) + 1, oppPow = myPow * (0.6 + Math.random() * 0.9);
@@ -704,6 +863,7 @@ const App = (() => {
     const myScore = 80 + Math.floor(Math.random() * 40);
     const oppScore = win ? myScore - (1 + Math.floor(Math.random() * 15)) : myScore + (1 + Math.floor(Math.random() * 15));
     if (win) { team.wins++; team.stats.wins++; }
+    Sound.play(win ? 'win' : 'lose'); Sound.vibrate(win ? [12, 40, 12] : 20);
     const resEl = document.getElementById('match-result-' + idx);
     if (resEl) resEl.innerHTML = win
       ? `<span class="w">🎉 击败 ${opp} ${myScore}:${oppScore}</span>，奖金 +${fmt(reward)}${eventMatchMul()>1?'（活动加成）':''}`
@@ -728,10 +888,11 @@ const App = (() => {
   function claimTask(idx, key) {
     const team = teams[idx], t = TASKS.find(x => x.key === key);
     if (!t || team.claimed[key]) return;
-    if (team.stats[t.metric] < t.target) return toast('任务尚未完成');
+    if (t.metric && team.stats[t.metric] < t.target) return toast('任务尚未完成');
     const fundGain = fundsPerSec(team) * t.reward.fundSec + 50;
     team.funds += fundGain; team.totalEarned += fundGain; team.claimed[key] = true;
     addDiamonds(t.reward.dia);
+    Sound.play('reward'); Sound.vibrate([10, 30, 10]);
     pushLog(team, `📋 完成任务「${t.name}」+${fmt(fundGain)} 💎${t.reward.dia}`, 'win');
     toast(`任务完成！+${fmt(fundGain)} 资金 +${t.reward.dia} 钻石`);
     refreshTeam(idx);
@@ -758,12 +919,13 @@ const App = (() => {
     const team = teams[idx];
     if (team.won) return;
     if (gameMode === 'dual') {
-      if (team.funds >= team.goal) { team.won = true; pushLog(team, '🏆 达成夺冠目标！', 'win'); onDualVictory(idx); }
+      if (team.funds >= team.goal) { team.won = true; Sound.play('victory'); Sound.vibrate([20, 60, 20, 60, 20]); pushLog(team, '🏆 达成夺冠目标！', 'win'); onDualVictory(idx); }
     } else {
       if (team.funds >= team.seasonTarget) {
         team.banners++; team.season++; team.bannerBonus += 0.05;
         const diaReward = 20 + team.banners * 5;
         addDiamonds(diaReward);
+        Sound.play('victory'); Sound.vibrate([20, 60, 20]);
         team.seasonTarget = Math.ceil(team.seasonTarget * 3.5);
         pushLog(team, `🏆 第 ${team.banners} 座总冠军！王朝加成 +5%，💎${diaReward}`, 'win');
         toast(`🏆 夺得第 ${team.banners} 座总冠军！进入第 ${team.season} 赛季`);
@@ -962,6 +1124,7 @@ const App = (() => {
   function finishPay() {
     if (payingPkg) {
       addDiamonds(payingPkg.diamonds);
+      Sound.play('coin');
       teams.forEach(t => pushLog(t, `🛒 充值到账 💎${payingPkg.diamonds}`, 'hl'));
       toast(`充值成功！💎 +${fmt(payingPkg.diamonds)}`);
       payingPkg = null;
@@ -972,10 +1135,11 @@ const App = (() => {
   function buyDiamondItem(key) {
     const it = DIAMOND_ITEMS.find(x => x.key === key);
     if (!it) return;
-    if (getDiamonds() < it.cost) { toast('钻石不足，请先充值'); return; }
+    if (getDiamonds() < it.cost) { Sound.play('error'); toast('钻石不足，请先充值'); return; }
     const team = teams[storeTeamIdx] || teams[0];
     if (!team) return;
     addDiamonds(-it.cost);
+    Sound.play('spend'); Sound.vibrate(12);
     if (it.type === 'cash') {
       const gain = Math.max(fundsPerSec(team) * it.sec, 100);
       team.funds += gain; team.totalEarned += gain;
@@ -1071,6 +1235,74 @@ const App = (() => {
   function closeRules() { const modal = document.getElementById('rules-modal'); if (modal) modal.style.display = 'none'; }
 
   // =========================================================
+  // 设置面板（音频 / 画质 / 震动）
+  // =========================================================
+  function openSettings() {
+    Sound.play('click');
+    ensureModal('settings-modal').classList.add('show');
+    renderSettings();
+  }
+  function closeSettings() { const m = document.getElementById('settings-modal'); if (m) m.classList.remove('show'); }
+  function renderSettings() {
+    const m = ensureModal('settings-modal');
+    const s = Sound.get();
+    const sw = (key, checked) =>
+      `<label class="switch"><input type="checkbox" ${checked ? 'checked' : ''} onchange="App.setSetting('${key}',this.checked)"><span class="sl-track"></span><span class="sl-thumb"></span></label>`;
+    const qLabels = { high: '高', medium: '中', low: '低' };
+    m.innerHTML = `
+      <div class="card" style="max-width:440px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div class="brand" style="margin-bottom:10px;"><h1 style="font-size:26px;">⚙️ 游戏设置</h1></div>
+        <div style="overflow-y:auto;padding-right:6px;">
+          <div class="set-group">
+            <h3>🔊 音频</h3>
+            <div class="set-row">
+              <div><div class="sl">背景音乐</div><div class="sd">主界面与游戏中循环播放</div></div>
+              <div class="sc">${sw('musicOn', s.musicOn)}</div>
+            </div>
+            <div class="set-row">
+              <div class="sl">音乐音量</div>
+              <div class="sc"><input type="range" class="vol" min="0" max="100" value="${Math.round(s.musicVol * 100)}" oninput="App.setSetting('musicVol',this.value/100)"></div>
+            </div>
+            <div class="set-row">
+              <div><div class="sl">音效</div><div class="sd">点击 · 投篮 · 签约 · 消耗 · 胜负</div></div>
+              <div class="sc">${sw('sfxOn', s.sfxOn)}</div>
+            </div>
+            <div class="set-row">
+              <div class="sl">音效音量</div>
+              <div class="sc"><input type="range" class="vol" min="0" max="100" value="${Math.round(s.sfxVol * 100)}" oninput="App.setSetting('sfxVol',this.value/100)" onchange="App.previewSfx()"></div>
+            </div>
+          </div>
+          <div class="set-group">
+            <h3>🖥️ 画质</h3>
+            <div class="set-row">
+              <div><div class="sl">画质等级</div><div class="sd">低画质关闭动画/阴影，提升弱机型流畅度</div></div>
+              <div class="q-btns">
+                ${['high', 'medium', 'low'].map(q => `<button class="q-btn ${s.quality === q ? 'active' : ''}" onclick="App.setSetting('quality','${q}')">${qLabels[q]}</button>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="set-group">
+            <h3>📳 其他</h3>
+            <div class="set-row">
+              <div><div class="sl">震动反馈</div><div class="sd">在支持的设备上点击时震动</div></div>
+              <div class="sc">${sw('vibrate', s.vibrate)}</div>
+            </div>
+          </div>
+          <p style="text-align:center;color:var(--muted);font-size:11px;margin-top:6px;">设置自动保存，下次启动依然生效</p>
+        </div>
+        <button class="btn" style="margin-top:14px;" onclick="App.closeSettings()">完成</button>
+      </div>`;
+  }
+  function setSetting(key, val) {
+    if (key === 'musicOn') Sound.setMusic(val);
+    else Sound.set(key, val);
+    if (key === 'sfxOn' && val) Sound.play('click');
+    // 仅开关/画质需要重绘以更新选中态；滑块拖动时不重绘，避免打断操作
+    if (key === 'quality' || key === 'musicOn' || key === 'sfxOn') { Sound.play('click'); renderSettings(); }
+  }
+  function previewSfx() { Sound.play('coin'); }
+
+  // =========================================================
   // 工具函数
   // =========================================================
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -1111,10 +1343,21 @@ const App = (() => {
   // ---------- 启动 ----------
   function init() {
     switchAuthTab('login');
+    Sound.applyQuality();
     ['auth-user', 'auth-pass', 'auth-confirm'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') submitAuth(); });
     });
+    // 首次任意手势解锁音频并播放背景音乐 + 通用导航点击音效
+    const SKIP = ['shoot-btn', 'buy-btn', 'match-btn', 'task-claim', 'gem-buy', 'q-btn'];
+    document.addEventListener('click', e => {
+      Sound.unlock();
+      const el = e.target.closest('button,.opt,.save-row,.pay-m,.social-btn');
+      if (!el) return;
+      if (SKIP.some(c => el.classList.contains(c))) return;
+      Sound.play('click');
+    }, true);
+    document.addEventListener('touchstart', () => Sound.unlock(), { once: true, passive: true });
   }
   document.addEventListener('DOMContentLoaded', init);
 
@@ -1127,5 +1370,6 @@ const App = (() => {
     openStore, closeStore, renderStore, openPay, closePay, doPay, finishPay,
     buyDiamondItem, closeOffline,
     manualSave, quitToMenu, showRules, closeRules, backToMenuFromVictory,
+    openSettings, closeSettings, renderSettings, setSetting, previewSfx,
   };
 })();

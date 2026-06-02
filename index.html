@@ -514,6 +514,48 @@
   }
   /* 触屏滚动顺滑 */
   .rules, .game-log, .modal-mask .card { -webkit-overflow-scrolling: touch; }
+
+  /* ===== 设置面板 ===== */
+  .set-group { margin-bottom: 16px; }
+  .set-group h3 { font-size: 14px; color: var(--orange); letter-spacing: 1px; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px; }
+  .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 11px 2px; border-bottom: 1px solid var(--line); }
+  .set-group .set-row:last-child { border-bottom: none; }
+  .set-row .sl { font-size: 14px; color: var(--txt); }
+  .set-row .sd { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .set-row .sc { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  /* 开关 */
+  .switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; cursor: pointer; }
+  .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .switch .sl-track { position: absolute; inset: 0; background: #2a3358; border-radius: 20px; transition: .2s; }
+  .switch .sl-thumb { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+    background: #fff; border-radius: 50%; transition: .2s; box-shadow: 0 2px 5px rgba(0,0,0,.4); }
+  .switch input:checked ~ .sl-track { background: linear-gradient(90deg, var(--orange), var(--nba-red)); }
+  .switch input:checked ~ .sl-thumb { transform: translateX(20px); }
+  /* 音量滑块 */
+  input[type=range].vol { -webkit-appearance: none; appearance: none; width: 130px; height: 6px;
+    border-radius: 4px; background: #2a3358; outline: none; }
+  input[type=range].vol::-webkit-slider-thumb { -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%; background: var(--orange); cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,.45); }
+  input[type=range].vol::-moz-range-thumb { width: 18px; height: 18px; border: none; border-radius: 50%;
+    background: var(--orange); cursor: pointer; }
+  /* 画质按钮 */
+  .q-btns { display: flex; gap: 8px; }
+  .q-btn { padding: 7px 16px; border: 1px solid var(--line); border-radius: 8px; background: transparent;
+    color: var(--muted); cursor: pointer; font-size: 13px; transition: .2s; }
+  .q-btn.active { background: linear-gradient(90deg, var(--orange), var(--nba-red)); color: #fff; border-color: transparent; }
+
+  /* ===== 画质等级 ===== */
+  body.quality-medium .card, body.quality-medium .team-panel,
+  body.quality-medium .opt, body.quality-medium .victory-card { box-shadow: none; }
+  body.quality-medium .brand h1 { text-shadow: none; }
+  body.quality-low { background: var(--dark) !important; }
+  body.quality-low .brand h1 { text-shadow: none; -webkit-text-fill-color: var(--orange); }
+  body.quality-low * { animation: none !important; transition: none !important;
+    box-shadow: none !important; text-shadow: none !important; }
+
 </style>
 </head>
 <body>
