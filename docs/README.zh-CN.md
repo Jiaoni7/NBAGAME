@@ -47,6 +47,9 @@
 - [superpowers/plans/2026-06-02-project-operations-foundation-plan.md](superpowers/plans/2026-06-02-project-operations-foundation-plan.md)
   - 用途：本轮项目运行文档体系落地计划
 
+- [superpowers/plans/2026-06-02-directory-structure-light-reorg-plan.md](superpowers/plans/2026-06-02-directory-structure-light-reorg-plan.md)
+  - 用途：目录结构第二阶段轻整理计划
+
 ## 最小更新规则
 
 为了让仓库状态始终可读，建议至少遵守下面 4 条：

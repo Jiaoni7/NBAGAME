@@ -42,13 +42,17 @@
 
 ### Phase 2：目录结构轻整理
 
-状态：未开始
+状态：已规划，未实施
 
 目标：
 
 - 明确哪些运行核心文件暂时保留在根目录
 - 明确哪些脚本、文档、资源后续应该继续归位
 - 在不破坏当前运行方式的前提下做轻量整理
+
+当前计划：
+
+- [superpowers/plans/2026-06-02-directory-structure-light-reorg-plan.md](superpowers/plans/2026-06-02-directory-structure-light-reorg-plan.md)
 
 ### Phase 3：代码与发布风险修复
 
@@ -109,7 +113,7 @@
 
 按优先级建议：
 
-1. 先做目录结构轻整理方案
+1. 按计划实施目录结构轻整理
 2. 再修第一批高风险代码问题
 3. 完成后更新本状态文档和 changelog
 
