@@ -10,6 +10,9 @@ const ASSETS = [
   'game.js',
   'sw.js',
   'icon.svg',
+  'icon-192.png',
+  'icon-512.png',
+  'icon-1024.png',
   'manifest.webmanifest'
 ];
 
