@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build output
+www/
+dist/
+coverage/
+
+# Capacitor / Android generated files
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# Editor / OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local private working assets
+skills/
+.codex/
+.claude/
+notes-private/
+research-private/
+local-only/
+
+# Local helper scripts or environment files
+*.local
+*.local.*
+starthost.local.bat

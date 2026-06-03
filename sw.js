@@ -3,10 +3,10 @@ const CACHE = 'nba-dynasty-v2';
 const ASSETS = [
   'index.html',
   'game.js',
-  'icon.svg',
-  'icon-192.png',
-  'icon-512.png',
-  'icon-1024.png',
+  'assets/icons/icon.svg',
+  'assets/icons/icon-192.png',
+  'assets/icons/icon-512.png',
+  'assets/icons/icon-1024.png',
   'manifest.webmanifest'
 ];
 
