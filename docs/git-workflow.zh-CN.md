@@ -2,8 +2,8 @@
 
 这份文档面向当前仓库的协作方式：
 
-- `origin` = 你的 fork：`git@github.com:Raint-s/NBAGAME.git`
-- `upstream` = 朋友的原始仓库：`git@github.com:Jiaoni7/NBAGAME.git`
+- `origin` = 本地 fork：`git@github.com:Raint-s/NBAGAME.git`
+- `upstream` = 上游原始仓库：`git@github.com:Jiaoni7/NBAGAME.git`
 
 当前建议把 `origin` 视为你的主开发仓库，把 `upstream` 视为上游同步来源。
 
@@ -34,6 +34,11 @@
 - `fix/...`
 - `docs/...`
 - `chore/...`
+
+补充说明：
+
+- 如果你当前本地暂时只有 `main`，这不是错误，说明前一阶段主要是在主线上完成仓库基线整理
+- 从当前开始，除非常小的文档修正外，建议所有新工作都先开分支，再 push 到 `origin` 并按需要发 PR
 
 ### 4. 私有工作资产永远不入库
 
