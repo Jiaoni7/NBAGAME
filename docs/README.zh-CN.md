@@ -28,13 +28,19 @@
   - 用途：记录 Android / Capacitor 打包相关说明
   - 何时更新：打包流程、平台要求或发布方式变化时
 
-### 3. 审计记录
+### 3. 迭代记录
+
+- [iterations/2026-06-03-iteration-1.1.zh-CN.md](iterations/2026-06-03-iteration-1.1.zh-CN.md)
+  - 用途：归档公开可见的版本迭代说明、功能更新摘要和实现范围
+  - 何时更新：完成一轮值得单独说明的版本迭代后，新增一份新文档，不覆盖旧记录
+
+### 4. 审计记录
 
 - [audits/2026-06-02-initial-code-audit.zh-CN.md](audits/2026-06-02-initial-code-audit.zh-CN.md)
   - 用途：归档阶段性代码审计结论
   - 何时更新：完成新的正式审计后，新增一份新文档，不覆盖旧记录
 
-### 4. 设计与计划
+### 5. 设计与计划
 
 - [superpowers/specs/2026-06-02-repo-hygiene-design.md](superpowers/specs/2026-06-02-repo-hygiene-design.md)
   - 用途：记录仓库规范化设计
