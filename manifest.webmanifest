@@ -3,42 +3,40 @@
   "short_name": "王朝传奇",
   "description": "打造你的 NBA 篮球帝国：签约真实球星、经营球队、参加联赛、可持续王朝运营。",
   "lang": "zh-CN",
-  "id": "/",
-  "start_url": "./index.html",
-  "scope": "./",
-  "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "start_url": "index.html",
+  "scope": ".",
+  "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0b0e1a",
   "theme_color": "#0b0e1a",
   "categories": ["games", "sports"],
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "icon-1024.png",
+      "src": "assets/icons/icon-1024.png",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon.svg",
+      "src": "assets/icons/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
