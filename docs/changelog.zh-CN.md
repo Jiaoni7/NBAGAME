@@ -9,12 +9,21 @@
 - 增加公开版本迭代归档目录与首份迭代记录：
   - `docs/iterations/`
   - `docs/iterations/2026-06-03-iteration-1.1.zh-CN.md`
+- 增加当前架构说明：
+  - `docs/architecture/current-architecture.zh-CN.md`
+- 增加协作文档整理设计记录：
+  - `docs/superpowers/specs/2026-06-03-collaboration-docs-foundation-design.md`
 
 ### 调整
 
-- 将朋友提供的 `迭代1.1.md` 从根目录归档到 `docs/iterations/` 体系
-- 补充文档索引对“迭代记录”类别的说明
-- 在 Git 协作文档中明确：当前本地即使暂时只有 `main` 也正常，但从后续新工作开始，默认先开分支再 push / PR
+- 将 `迭代1.1.md` 从根目录归档到 `docs/iterations/` 体系
+- 统一公开协作文档为团队中立口吻，避免绑定个人视角
+- 补充文档索引的阅读顺序、结构入口与分类路由说明
+- 在开发规范与 Git 协作文档中明确：
+  - 小改动可直接实施，但结构、命令、流程变化要同步文档
+  - 中大改动优先写 spec / plan
+  - 从当前阶段起，新的非小型工作默认不直接在 `main` 上开发
+- 将根目录本地 `skills.md` 纳入忽略范围，继续保持私有技能文件不入库
 
 ## 2026-06-02
 

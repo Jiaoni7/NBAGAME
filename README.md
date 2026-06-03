@@ -2,13 +2,14 @@
 
 NBA-themed browser game project with PWA support and optional Android packaging via Capacitor.
 
-This repository is intended to stay public and runnable. Local development aids such as project-specific skills, research notes, private prompts, and personal helper scripts should stay on each contributor's machine and must not be committed.
+This repository is kept public and runnable. Team-private skills, prompts, research notes, and local helper assets stay on each contributor's machine and are not part of the open-source repository.
 
-## Status
+## Project Shape
 
-- Current app shape: single-page web game
-- Packaging target: web / PWA / Android (Capacitor)
-- Primary collaboration model: small team, developer-led, product-supported
+- Current app model: single-page web game built with native HTML, CSS, and JavaScript
+- Packaging targets: web / PWA / Android (Capacitor)
+- Collaboration model: small-team delivery, developer-led implementation, product-supported iteration
+- Git model: develop on branch in a personal fork, sync to the upstream repository through PR when needed
 
 ## Quick Start
 
@@ -61,10 +62,13 @@ npm run build:apk
 |-- assets/
 |   `-- icons/
 |-- docs/
+|   |-- architecture/
+|   |-- platforms/
 |   |-- release-checklist.md
-|   `-- superpowers/specs/
+|   `-- superpowers/
 |-- scripts/
 |   `-- copy-www.js
+|-- capacitor.config.json
 |-- game.js
 |-- index.html
 |-- manifest.webmanifest
@@ -76,26 +80,28 @@ npm run build:apk
 
 Committed:
 
-- game source and assets required to run the project
-- packaging scripts and config
-- public contributor-facing documentation
+- runtime source files and assets required to run the project
+- packaging scripts and public config
+- public team workflow docs and release docs
 
 Ignored and kept local:
 
 - `skills/`
+- `skills.md`
 - `.codex/`
 - `.claude/`
 - `notes-private/`
 - `research-private/`
-- personal helper scripts, private prompts, local research, temporary logs
+- private prompts, local-only research, helper scripts, temporary logs
 
-If a workflow note or project-specific skill is useful for local development, store it inside an ignored local-only directory rather than the repository root.
+If a local workflow note or project-specific `SKILL.md` is useful during development, keep it under an ignored directory instead of the public repository root.
 
 ## Team Docs
 
 - [DEVELOPMENT.md](DEVELOPMENT.md)
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [docs/README.zh-CN.md](docs/README.zh-CN.md)
+- [docs/architecture/current-architecture.zh-CN.md](docs/architecture/current-architecture.zh-CN.md)
 - [docs/project-status.zh-CN.md](docs/project-status.zh-CN.md)
 - [docs/changelog.zh-CN.md](docs/changelog.zh-CN.md)
 - [docs/release-checklist.md](docs/release-checklist.md)
@@ -104,6 +110,6 @@ If a workflow note or project-specific skill is useful for local development, st
 
 ## Notes
 
-- Android packaging notes now live at `docs/platforms/android-packaging.zh-CN.md`.
-- This repository should always be usable without any private local-only files.
-- For current project state, planning, and audit records, start from `docs/README.zh-CN.md`.
+- Start from [docs/README.zh-CN.md](docs/README.zh-CN.md) for current project state, workflow routing, and planning records.
+- Use [docs/architecture/current-architecture.zh-CN.md](docs/architecture/current-architecture.zh-CN.md) when deciding where new public files or structural changes should go.
+- This repository should remain usable without any private local-only files.
