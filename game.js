@@ -227,6 +227,13 @@ const App = (() => {
     if (level <= 0) return null;
     return pool[Math.min(level - 1, pool.length - 1)];
   }
+  // 阵容是否已凑齐 5 个位置（每个位置至少 1 名球员）
+  function lineupComplete(team) {
+    return team.players.every(p => p.level >= 1);
+  }
+  function emptyPositions(team) {
+    return POSITIONS.filter((_, i) => team.players[i].level < 1).map(p => p.name);
+  }
   function initials(en) {
     const parts = en.replace(/[^A-Za-z\s]/g, '').trim().split(/\s+/);
     return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
@@ -308,6 +315,27 @@ const App = (() => {
     hof:    { key:'hof',    icon:'👑', name:'名人堂', tag:'硬核', startFunds:0, costMul:1.25, outputMul:0.85,goal:1000000,seasonBase:120000, desc:'资源紧张、成本高昂，只为真正的传奇而生。' },
   };
 
+  // ---------- 配置：活动中心（充值 / 活跃 / 节日）----------
+  const ACTIVITIES = {
+    recharge: [
+      { id:'first2x',  icon:'💎', name:'首充双倍', tag:'限时', desc:'首次充值任意礼包，到账钻石翻倍，超值入手。', action:'recharge' },
+      { id:'daily_deal',icon:'🎁', name:'每日特惠礼包', tag:'每日', desc:'每日一次超值钻石礼包，6 元立得 180 钻。', action:'recharge' },
+    ],
+    active: [
+      { id:'daily_sign', icon:'📅', name:'每日签到', tag:'每日', desc:'每天登录签到，领取钻石奖励。', dia:10, type:'daily' },
+      { id:'online_bonus',icon:'⏰', name:'在线奖励', tag:'每日', desc:'每日可领一次资金补给与少量钻石。', fundSec:120, dia:5, type:'daily' },
+      { id:'win_streak', icon:'🔥', name:'连胜挑战', tag:'活跃', desc:'每日首次取得比赛胜利后领取丰厚资金。', fundSec:200, dia:8, type:'daily' },
+    ],
+    festival: [
+      { id:'dragonboat', icon:'🐲', name:'端午·龙舟竞渡', tag:'节日限定', desc:'端午佳节登录领「粽」享好礼：钻石 + 资金大礼包，仅可领取一次。', dia:50, fundSec:300, type:'once' },
+    ],
+  };
+  const ACT_CAT_META = {
+    recharge: { name:'充值活动', icon:'💳' },
+    active:   { name:'活跃活动', icon:'🎯' },
+    festival: { name:'节日活动', icon:'🎊' },
+  };
+
   // ---------- 配置：限时活动（全局轮换）----------
   const EVENTS = [
     { key:'allstar', icon:'⭐', name:'全明星周末', desc:'自动产出 ×2',   dur:30, output:2 },
@@ -351,11 +379,14 @@ const App = (() => {
   const OFFLINE_RATE = 0.5;
   const OFFLINE_CAP_H = 8;
 
-  // ---------- 赛制：常规赛 → 季后赛 → 总冠军 ----------
-  const REGULAR_GAMES = 12;        // 每赛季常规赛场次
-  const PLAYOFF_NEED  = 6;         // 晋级季后赛所需胜场（胜率≥50%）
+  // ---------- 赛制：常规赛 → 附加赛 → 季后赛 → 总冠军 ----------
+  const REGULAR_GAMES = 82;        // 每赛季常规赛场次（真实 NBA 赛制）
   const SERIES_WIN    = 4;         // 季后赛每轮系列赛胜场（7局4胜）
-  const PLAYOFF_ROUND_NAMES = { 1: '季后赛首轮', 2: '分区决赛', 3: '总决赛' };
+  const PLAYIN_LOW = 7, PLAYIN_HIGH = 10;  // 附加赛名次区间（每区第7~10名）
+  const DIRECT_SEEDS = 6;          // 每区前6名直接锁定季后赛席位
+  const CONF_PLAYOFF = 8;          // 每区季后赛球队数
+  // 季后赛轮次：1首轮 → 2分区半决赛 → 3分区决赛 → 4总决赛
+  const PLAYOFF_ROUND_NAMES = { 1: '季后赛首轮', 2: '分区半决赛', 3: '分区决赛', 4: '总决赛' };
 
   // ---------- 背景主题 ----------
   const BACKGROUNDS = [
@@ -372,7 +403,7 @@ const App = (() => {
   Object.keys(PLAYER_POOL).forEach(k => PLAYER_POOL[k].forEach(p => ALL_PLAYERS.push(p)));
 
   // ---------- 联盟模拟：球队 / 球员名库 ----------
-  const LEAGUE_SIZE = 8;          // 联盟球队数（含玩家），8→4→2→1 三轮季后赛
+  const LEAGUE_SIZE = 30;         // 联盟球队总数（含玩家），东西部各15队
   const AI_TEAM_NAMES = ['湖人','凯尔特人','勇士','公牛','马刺','热火','雄鹿','掘金','76人','快船','太阳','篮网','尼克斯','独行侠','森林狼','鹈鹕'];
   // ---------- 2025-26 赛季真实首发名单（PG/SG/SF/PF/C 五人，含真实交易：东契奇加盟湖人、文班亚马马刺、福克斯马刺、KD离队、弗拉格状元等）----------
   const REAL_ROSTERS = {
@@ -392,7 +423,30 @@ const App = (() => {
     '独行侠': [{n:'德安吉洛·拉塞尔',r:81},{n:'克莱·汤普森',r:82},{n:'库珀·弗拉格',r:83},{n:'安东尼·戴维斯',r:92},{n:'德雷克·莱夫利',r:81}],
     '森林狼': [{n:'迈克·康利',r:79},{n:'安东尼·爱德华兹',r:93},{n:'杰登·麦克丹尼尔斯',r:83},{n:'朱利叶斯·兰德尔',r:86},{n:'鲁迪·戈贝尔',r:85}],
     '鹈鹕':   [{n:'德章泰·穆雷',r:84},{n:'乔丹·普尔',r:83},{n:'特雷·墨菲',r:83},{n:'锡安·威廉姆斯',r:88},{n:'伊夫·米西',r:78}],
+    '猛龙':   [{n:'伊曼纽尔·奎克利',r:83},{n:'格拉迪·迪克',r:78},{n:'RJ·巴雷特',r:83},{n:'斯科蒂·巴恩斯',r:86},{n:'雅各布·珀尔特尔',r:80}],
+    '骑士':   [{n:'达柳斯·加兰',r:86},{n:'唐纳万·米切尔',r:91},{n:'马克斯·斯特鲁斯',r:78},{n:'埃文·莫布利',r:88},{n:'贾勒特·阿伦',r:84}],
+    '活塞':   [{n:'凯德·坎宁安',r:89},{n:'贾登·艾维',r:80},{n:'奥萨·汤普森',r:79},{n:'汤比·哈里斯',r:80},{n:'杰伦·杜伦',r:83}],
+    '步行者': [{n:'泰瑞斯·哈利伯顿',r:89},{n:'安德鲁·内姆哈德',r:79},{n:'本·谢泼德',r:76},{n:'帕斯卡尔·西亚卡姆',r:87},{n:'艾萨亚·杰克逊',r:78}],
+    '老鹰':   [{n:'特雷·杨',r:88},{n:'戴森·丹尼尔斯',r:81},{n:'扎卡里·里萨谢',r:79},{n:'杰伦·约翰逊',r:85},{n:'克里斯塔普斯·波尔津吉斯',r:84}],
+    '黄蜂':   [{n:'拉梅洛·鲍尔',r:86},{n:'布兰登·米勒',r:84},{n:'乔什·格林',r:77},{n:'迈尔斯·布里奇斯',r:82},{n:'瑞恩·孔德',r:76}],
+    '魔术':   [{n:'雅伦·萨格斯',r:84},{n:'德斯蒙德·班恩',r:85},{n:'弗朗茨·瓦格纳',r:87},{n:'保罗·班切罗',r:88},{n:'文德尔·卡特',r:80}],
+    '奇才':   [{n:'巴布·卡灵顿',r:75},{n:'CJ·麦科勒姆',r:81},{n:'比拉尔·库利巴利',r:79},{n:'凯肖恩·乔治',r:75},{n:'阿历克斯·萨尔',r:79}],
+    '雷霆':   [{n:'谢伊·吉尔杰斯-亚历山大',r:97},{n:'卢盖兹·多特',r:80},{n:'杰伦·威廉姆斯',r:87},{n:'切特·霍姆格伦',r:88},{n:'伊萨亚·哈滕施泰因',r:81}],
+    '开拓者': [{n:'斯库特·亨德森',r:80},{n:'谢登·夏普',r:81},{n:'杰拉米·格兰特',r:81},{n:'图马尼·卡马拉',r:78},{n:'唐纳万·克林根',r:80}],
+    '爵士':   [{n:'艾萨亚·科利尔',r:76},{n:'科迪·威廉姆斯',r:75},{n:'艾斯·贝利',r:80},{n:'拉里·马尔卡宁',r:85},{n:'沃克·凯斯勒',r:82}],
+    '国王':   [{n:'丹尼斯·施罗德',r:80},{n:'扎克·拉文',r:85},{n:'德马尔·德罗赞',r:84},{n:'基根·穆雷',r:83},{n:'多曼塔斯·萨博尼斯',r:87}],
+    '火箭':   [{n:'阿门·汤普森',r:84},{n:'里德·谢泼德',r:79},{n:'凯文·杜兰特',r:91},{n:'杰巴里·史密斯',r:82},{n:'阿尔佩伦·申京',r:87}],
+    '灰熊':   [{n:'贾·莫兰特',r:89},{n:'凯·杰克逊',r:76},{n:'杰伦·威尔斯',r:79},{n:'杰伦·杰克逊',r:87},{n:'赞克·埃迪',r:79}],
   };
+  // ---------- 东西部分区（各15队，含联盟全部30支球队）----------
+  const EAST_TEAMS = ['凯尔特人','尼克斯','76人','篮网','猛龙','公牛','骑士','活塞','步行者','雄鹿','老鹰','黄蜂','热火','魔术','奇才'];
+  const WEST_TEAMS = ['掘金','森林狼','雷霆','开拓者','爵士','勇士','快船','湖人','太阳','国王','独行侠','火箭','灰熊','鹈鹕','马刺'];
+  function confOf(name) {
+    const base = String(name).replace(/队$/, '');
+    if (EAST_TEAMS.includes(base)) return 'E';
+    if (WEST_TEAMS.includes(base)) return 'W';
+    return null;
+  }
   const GEN_FIRST = ['马库斯','德文','贾伦','泰勒','凯尔','布兰登','达柳斯','杰登','卡梅伦','伊森','泰瑞斯','肖恩','科迪','马利克','贾马尔','德里克','特雷','奥斯汀','以赛亚','卡尔顿','贾巴里','多米尼克','雷吉','克林特','奥比'];
   const GEN_LAST  = ['威廉姆斯','约翰逊','史密斯','布朗','戴维斯','托马斯','杰克逊','怀特','哈里斯','刘易斯','沃克','罗宾逊','卡特','格林','米切尔','莫里斯','杨','福克斯','爱德华兹','班克斯','里德','贝尔','库珀','华盛顿','邓恩'];
   // 位置基础数据画像（评级≈99 顶配时的场均，按评级与位置缩放）
@@ -468,6 +522,7 @@ const App = (() => {
   let leagueTab = 'standings';
   let statBoard = 'player';   // player | team
   let statGroup = 'basic';    // basic | adv
+  let standingsConf = 'E';    // 排名查看分区：E | W
 
   // =========================================================
   // 账户系统（localStorage）
@@ -485,6 +540,23 @@ const App = (() => {
     a[u].diamonds = ((a[u].diamonds) || 0) + n;
     saveAccounts(a);
     updateGemDisplays();
+  }
+  // 活动领取记录（按账号持久化）
+  function todayKey() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  function getActClaims() { const a = getAccounts(), u = curUser(); return (a[u] && a[u].actClaims) || {}; }
+  function setActClaim(id, val) {
+    const a = getAccounts(), u = curUser();
+    if (!a[u]) return;
+    if (!a[u].actClaims) a[u].actClaims = {};
+    a[u].actClaims[id] = val;
+    saveAccounts(a);
+  }
+  // 活动是否可领取：daily 每天一次，once 永久一次
+  function actClaimable(act) {
+    const claims = getActClaims();
+    if (act.type === 'once') return claims[act.id] !== 'done';
+    if (act.type === 'daily') return claims[act.id] !== todayKey();
+    return false; // recharge 类无领取动作
   }
 
   // =========================================================
@@ -686,12 +758,14 @@ const App = (() => {
       goal: diff.goal,
       season: 1, seasonTarget: diff.seasonBase,
       banners: 0, bannerBonus: 0, permBonus: 0, boostUntil: 0,
-      players: POSITIONS.map(p => ({ key: p.key, level: 0 })),
+      players: POSITIONS.map(p => ({ key: p.key, level: 1 })),
       facilities: FACILITIES.reduce((o, f) => (o[f.key] = 0, o), {}),
       totalEarned: diff.startFunds,
       matches: 0, wins: 0, lastMatchAt: 0,
       seasonPhase: 'regular', regGames: 0, regWins: 0,
+      conf: 'E',
       playoffRound: 0, seriesWins: 0, seriesLosses: 0, nextOpp: null,
+      playin: null,
       rookies: [], league: null, awards: null, fmvp: null, history: [],
       stats: { clicks: 0, signs: 0, matches: 0, wins: 0 },
       claimed: {}, won: false, log: [],
@@ -770,11 +844,12 @@ const App = (() => {
     return out;
   }
   function genOpponent(team) {
-    // 单人模式：从联盟真实球队中取对手（常规赛随机 / 季后赛取对阵图对手）
+    // 单人模式：从联盟真实球队中取对手（常规赛随机 / 附加赛、季后赛取指定对手）
     if (gameMode === 'single' && team.league) {
-      const lt = (team.seasonPhase === 'playoff')
-        ? playerSeriesOpponent(team)
-        : pickAiTeam(team);
+      let lt = null;
+      if (team.seasonPhase === 'playoff') lt = playerSeriesOpponent(team);
+      else if (team.seasonPhase === 'playin') lt = team.playin ? byId(team, team.playin.oppId) : null;
+      else lt = pickAiTeam(team);
       if (lt) {
         // 完整 5 人首发，按 PG→C 位置顺序展示
         const order = { PG: 0, SG: 1, SF: 2, PF: 3, C: 4 };
@@ -797,6 +872,7 @@ const App = (() => {
   function buildAiTeam(id, name, season) {
     const base = aiStrengthBase(season);
     const baseName = String(name).replace(/队$/, '');
+    const conf = confOf(baseName);
     const real = REAL_ROSTERS[baseName];
     if (real) {
       const grow = (season - 1) * 1.2;  // 真实名单评级随赛季缓慢成长
@@ -810,7 +886,7 @@ const App = (() => {
       const avg = roster.reduce((s, p) => s + p.rating, 0) / roster.length;
       const quality = avg / (86 + grow);
       const str = Math.round(base * quality * (0.9 + Math.random() * 0.2));
-      return { id, name, isPlayer: false, str, w: 0, l: 0, seed: 0, roster };
+      return { id, name, isPlayer: false, conf, str, w: 0, l: 0, seed: 0, roster };
     }
     // 兜底：无真实名单时随机生成
     const str = Math.round(base * (0.74 + Math.random() * 0.72));
@@ -821,13 +897,14 @@ const App = (() => {
       return { name: nm, pos: pos.key, rating, isRookie: false,
         stats: genStatLine(rating, pos.key, name + nm + season + i) };
     });
-    return { id, name, isPlayer: false, str, w: 0, l: 0, seed: 0, roster };
+    return { id, name, isPlayer: false, conf, str, w: 0, l: 0, seed: 0, roster };
   }
   // 玩家球队在联盟中的镜像（战绩同步常规赛，阵容取真实首发+新秀）
   function playerLeagueTeam(team) {
     const lt = team.league.teams.find(t => t.isPlayer);
     if (!lt) return null;
     lt.name = team.teamName;
+    lt.conf = team.conf;
     lt.str = teamPower(team);
     lt.w = team.regWins;
     lt.l = team.regGames - team.regWins;
@@ -852,19 +929,28 @@ const App = (() => {
     });
     return out;
   }
+  // 构建 30 队联盟：玩家固定东部，东部 14 支 AI + 西部 15 支 AI
   function buildLeague(team) {
-    const names = AI_TEAM_NAMES.filter(n => n !== team.teamName).slice();
-    // 洗牌取 LEAGUE_SIZE-1 个 AI 队名
-    for (let i = names.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [names[i], names[j]] = [names[j], names[i]]; }
-    const teamsArr = [{ id: 'me', name: team.teamName, isPlayer: true, str: teamPower(team), w: 0, l: 0, seed: 0, roster: playerRoster(team) }];
-    for (let i = 0; i < LEAGUE_SIZE - 1; i++) {
-      teamsArr.push(buildAiTeam('ai' + i, (names[i] || ('劲旅' + i)) + '队', team.season));
-    }
+    if (!team.conf) team.conf = 'E';
+    const teamsArr = [{ id: 'me', name: team.teamName, isPlayer: true, conf: team.conf,
+      str: teamPower(team), w: 0, l: 0, seed: 0, roster: playerRoster(team) }];
+    // 玩家所在分区少放 1 支真实球队（给玩家腾位置），另一分区放满 15 支
+    const eastPool = EAST_TEAMS.filter(n => n !== team.teamName);
+    const westPool = WEST_TEAMS.filter(n => n !== team.teamName);
+    const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const eastCount = team.conf === 'E' ? 14 : 15;
+    const westCount = team.conf === 'W' ? 14 : 15;
+    const eastNames = shuffle(eastPool.slice()).slice(0, eastCount);
+    const westNames = shuffle(westPool.slice()).slice(0, westCount);
+    let n = 0;
+    eastNames.forEach(nm => teamsArr.push(buildAiTeam('ai' + (n++), nm + '队', team.season)));
+    westNames.forEach(nm => teamsArr.push(buildAiTeam('ai' + (n++), nm + '队', team.season)));
     team.league = { season: team.season, teams: teamsArr, bracket: null };
     team.awards = null; team.fmvp = null;
   }
   function ensureLeague(team) {
-    if (!team.league || team.league.season !== team.season || !team.league.teams) buildLeague(team);
+    if (!team.league || team.league.season !== team.season || !team.league.teams
+        || team.league.teams.length < LEAGUE_SIZE) buildLeague(team);
   }
   function pickAiTeam(team) {
     const ai = team.league.teams.filter(t => !t.isPlayer);
@@ -884,29 +970,121 @@ const App = (() => {
       if (Math.random() < wc) t.w++; else t.l++;
     });
   }
-  function standings(team) {
+  // 分区排名：conf 传 'E'/'W' 返回该区排序；不传返回全联盟排序
+  function standings(team, conf) {
     playerLeagueTeam(team);
-    return team.league.teams.slice().sort((a, b) => {
+    let arr = team.league.teams.slice();
+    if (conf) arr = arr.filter(t => t.conf === conf);
+    return arr.sort((a, b) => {
       const wpA = a.w / Math.max(1, a.w + a.l), wpB = b.w / Math.max(1, b.w + b.l);
       if (wpB !== wpA) return wpB - wpA;
       return b.w - a.w;
     });
   }
-  // ---------- 季后赛对阵图 ----------
-  function buildBracket(team) {
-    const seeded = standings(team).slice(0, LEAGUE_SIZE);
-    seeded.forEach((t, i) => t.seed = i + 1);
-    // 首轮：1v8 2v7 3v6 4v5
-    const pair = (a, b) => ({ a, b, aw: 0, bw: 0, winner: null, hasPlayer: a.isPlayer || b.isPlayer });
-    const r1 = [pair(seeded[0], seeded[7]), pair(seeded[3], seeded[4]), pair(seeded[1], seeded[6]), pair(seeded[2], seeded[5])];
-    team.league.bracket = { rounds: [r1, [], []], champion: null };
+  // 玩家在本分区的名次（1 起）
+  function playerConfRank(team) {
+    const arr = standings(team, team.conf);
+    return arr.findIndex(t => t.isPlayer) + 1;
+  }
+  // ---------- 附加赛 (Play-In) ----------
+  function byId(team, id) { return team.league.teams.find(t => t.id === id); }
+  // 单场对决（按战力概率），返回 {winner, loser}
+  function simGame(a, b) {
+    const pa = a.str / (a.str + b.str);
+    return Math.random() < pa ? { winner: a, loser: b } : { winner: b, loser: a };
+  }
+  // 模拟某分区附加赛，返回该区第 7、8 种子 {s7, s8}
+  function simPlayinConf(team, conf) {
+    const seeds = standings(team, conf);
+    const s7 = seeds[6], s8 = seeds[7], s9 = seeds[8], s10 = seeds[9];
+    const gA = simGame(s7, s8);          // 7v8：胜者锁定第7种子
+    const gB = simGame(s9, s10);         // 9v10：负者淘汰
+    const gC = simGame(gA.loser, gB.winner); // 保级战：胜者第8种子
+    return { s7: gA.winner, s8: gC.winner };
+  }
+  // 进入附加赛（仅玩家分区第 7-10 名时）。确定玩家首场对手
+  function startPlayin(team) {
+    const seeds = standings(team, team.conf);
+    const myRank = seeds.findIndex(t => t.isPlayer) + 1; // 7..10
+    team.seasonPhase = 'playin';
+    const pi = { conf: team.conf, myRank, seed7Id: null, qualified: null };
+    if (myRank === 7 || myRank === 8) {
+      pi.stage = 'A';
+      pi.oppId = seeds[(myRank === 7 ? 8 : 7) - 1].id;
+    } else { // 9 或 10
+      pi.stage = 'B';
+      pi.oppId = seeds[(myRank === 9 ? 10 : 9) - 1].id;
+      const gA = simGame(seeds[6], seeds[7]); // 本区 7v8 全由 AI 决出第7种子
+      pi.seed7Id = gA.winner.id; pi.gameALoserId = gA.loser.id;
+    }
+    team.playin = pi;
+    return pi;
+  }
+  // 玩家附加赛晋级，组建季后赛对阵图并进入季后赛
+  function finishPlayinQualify(team, idx, mySeed) {
+    const pi = team.playin;
+    const seeds = standings(team, team.conf);
+    let seed7Id, seed8Id;
+    if (mySeed === 7) {
+      seed7Id = 'me';
+      // 第8种子：玩家7v8对手(负者) vs 9v10胜者 的保级战
+      const gB = simGame(seeds[8], seeds[9]);
+      const gC = simGame(byId(team, pi.oppId), gB.winner);
+      seed8Id = gC.winner.id;
+    } else {
+      seed7Id = pi.seed7Id; seed8Id = 'me';
+    }
+    const override = {}; override[team.conf] = { seed7Id, seed8Id };
+    buildBracket(team, override);
+    team.seasonPhase = 'playoff'; team.playoffRound = 1; team.seriesWins = 0; team.seriesLosses = 0;
+    team.playin = null;
+  }
+  // 玩家附加赛出局：模拟全联盟季后赛决出冠军，记录历史并进入休赛期
+  function eliminateInPlayin(team, idx) {
+    buildBracket(team, null);
+    simulateRemainingBracket(team);
+    recordHistory(team, false);
+    team.playin = null;
+    enterOffseason(team, idx);
+  }
+  // ---------- 季后赛对阵图（东西部各 8 队 → 分区决赛 → 总决赛）----------
+  function pairOf(a, b) { return { a, b, aw: 0, bw: 0, winner: null, hasPlayer: !!(a && b && (a.isPlayer || b.isPlayer)) }; }
+  // 取某分区前 8 种子；override 指定玩家分区第7/8种子，否则模拟附加赛
+  function confTop8(team, conf, override) {
+    const seeds = standings(team, conf);
+    const top6 = seeds.slice(0, DIRECT_SEEDS);
+    let s7, s8;
+    if (override && override[conf]) {
+      s7 = byId(team, override[conf].seed7Id);
+      s8 = byId(team, override[conf].seed8Id);
+    } else {
+      const r = simPlayinConf(team, conf); s7 = r.s7; s8 = r.s8;
+    }
+    return top6.concat([s7, s8]);
+  }
+  function buildBracket(team, override) {
+    const east = confTop8(team, 'E', override);
+    const west = confTop8(team, 'W', override);
+    [east, west].forEach(arr => arr.forEach((t, i) => { if (t) t.seed = i + 1; }));
+    const confRounds = s => [[pairOf(s[0], s[7]), pairOf(s[3], s[4]), pairOf(s[1], s[6]), pairOf(s[2], s[5])], [], []];
+    team.league.bracket = {
+      east: { rounds: confRounds(east) },
+      west: { rounds: confRounds(west) },
+      finals: null, champion: null,
+    };
     return team.league.bracket;
   }
+  // 定位玩家当前所在的系列赛
   function findPlayerMatchup(team) {
     const br = team.league.bracket; if (!br) return null;
-    for (let r = 0; r < br.rounds.length; r++) {
-      const m = br.rounds[r].find(x => x && (x.a.isPlayer || x.b.isPlayer) && !x.winner);
-      if (m) return { matchup: m, round: r };
+    if (br.finals && (br.finals.a.isPlayer || br.finals.b.isPlayer) && !br.finals.winner)
+      return { matchup: br.finals, where: 'finals', round: 3 };
+    for (const cf of ['east', 'west']) {
+      const rounds = br[cf].rounds;
+      for (let r = 0; r < rounds.length; r++) {
+        const m = (rounds[r] || []).find(x => x && (x.a.isPlayer || x.b.isPlayer) && !x.winner);
+        if (m) return { matchup: m, where: cf, round: r };
+      }
     }
     return null;
   }
@@ -915,51 +1093,63 @@ const App = (() => {
     if (!pm) return null;
     return pm.matchup.a.isPlayer ? pm.matchup.b : pm.matchup.a;
   }
-  // 即时模拟一组 AI 系列赛（7局4胜）
+  // 玩家当前季后赛轮次（1首轮 2半决赛 3分区决赛 4总决赛）
+  function currentPlayoffRound(team) {
+    const pm = findPlayerMatchup(team);
+    if (!pm) return team.playoffRound || 4;
+    return pm.where === 'finals' ? 4 : pm.round + 1;
+  }
+  // 即时模拟一组系列赛（7局4胜）
   function simSeries(m) {
-    if (m.winner) return;
+    if (!m || m.winner) return;
     let aw = 0, bw = 0;
     const pa = m.a.str / (m.a.str + m.b.str);
     while (aw < SERIES_WIN && bw < SERIES_WIN) { if (Math.random() < pa) aw++; else bw++; }
     m.aw = aw; m.bw = bw; m.winner = aw > bw ? m.a : m.b;
   }
-  // 玩家系列赛结束后推进对阵图：模拟同轮其它系列赛，生成下一轮
+  // 模拟某分区一轮：补完本轮，并生成下一轮（r<2 时）
+  function simConfRound(confBr, r) {
+    if (!confBr.rounds[r] || !confBr.rounds[r].length) return;
+    confBr.rounds[r].forEach(x => simSeries(x));
+    if (r < 2 && (!confBr.rounds[r + 1] || !confBr.rounds[r + 1].length)) {
+      const w = confBr.rounds[r].map(x => x.winner);
+      const next = [];
+      for (let i = 0; i < w.length; i += 2) next.push(pairOf(w[i], w[i + 1]));
+      confBr.rounds[r + 1] = next;
+    }
+  }
+  // 玩家系列赛结束后推进对阵图（两分区并行 + 总决赛）
   function advanceBracket(team, playerWon) {
     const br = team.league.bracket;
     const pm = findPlayerMatchup(team);
     if (!pm) return;
-    const m = pm.matchup, r = pm.round;
+    const m = pm.matchup;
     m.aw = m.a.isPlayer ? team.seriesWins : team.seriesLosses;
     m.bw = m.b.isPlayer ? team.seriesWins : team.seriesLosses;
     m.winner = playerWon ? (m.a.isPlayer ? m.a : m.b) : (m.a.isPlayer ? m.b : m.a);
-    // 模拟本轮其它系列赛
-    br.rounds[r].forEach(x => simSeries(x));
-    // 生成下一轮
-    if (r < 2) {
-      const winners = br.rounds[r].map(x => x.winner);
-      const next = [];
-      for (let i = 0; i < winners.length; i += 2) {
-        next.push({ a: winners[i], b: winners[i + 1], aw: 0, bw: 0, winner: null, hasPlayer: winners[i].isPlayer || winners[i + 1].isPlayer });
-      }
-      br.rounds[r + 1] = next;
-    } else {
-      br.champion = br.rounds[2][0].winner;
+    if (pm.where === 'finals') { br.champion = m.winner; return; }
+    const cf = pm.where, r = pm.round, other = cf === 'east' ? 'west' : 'east';
+    simConfRound(br[cf], r);       // 补完本区本轮 + 生成下一轮
+    simConfRound(br[other], r);    // 另一分区同步推进一轮
+    if (r === 2) {                 // 玩家赢下分区决赛 → 进军总决赛
+      const myChamp = m.winner;
+      const otherChamp = br[other].rounds[2][0] ? br[other].rounds[2][0].winner : null;
+      if (myChamp && otherChamp) br.finals = pairOf(myChamp, otherChamp);
     }
   }
-  // 玩家被淘汰后，自动模拟剩余对阵决出总冠军（用于历史记录）
+  // 玩家被淘汰后，自动模拟剩余对阵决出总冠军（历史记录用）
   function simulateRemainingBracket(team) {
     const br = team.league.bracket; if (!br) return;
-    for (let r = 0; r < 3; r++) {
-      if (!br.rounds[r] || !br.rounds[r].length) break;
-      br.rounds[r].forEach(x => simSeries(x));
-      if (r < 2 && (!br.rounds[r + 1] || !br.rounds[r + 1].length)) {
-        const winners = br.rounds[r].map(x => x.winner);
-        const next = [];
-        for (let i = 0; i < winners.length; i += 2) next.push({ a: winners[i], b: winners[i + 1], aw: 0, bw: 0, winner: null, hasPlayer: false });
-        br.rounds[r + 1] = next;
+    ['east', 'west'].forEach(cf => {
+      for (let r = 0; r < 3; r++) {
+        if (!br[cf].rounds[r] || !br[cf].rounds[r].length) break;
+        simConfRound(br[cf], r);
       }
-    }
-    if (br.rounds[2] && br.rounds[2][0]) br.champion = br.rounds[2][0].winner;
+    });
+    const eC = br.east.rounds[2] && br.east.rounds[2][0] ? br.east.rounds[2][0].winner : null;
+    const wC = br.west.rounds[2] && br.west.rounds[2][0] ? br.west.rounds[2][0].winner : null;
+    if (!br.finals && eC && wC) br.finals = pairOf(eC, wC);
+    if (br.finals) { simSeries(br.finals); br.champion = br.finals.winner; }
   }
   // ---------- 数据榜 / 奖项 ----------
   function allLeaguePlayers(team) {
@@ -1038,10 +1228,19 @@ const App = (() => {
       players: s.players, totalEarned: s.totalEarned || s.funds,
       matches: s.matches || 0, wins: s.wins || 0,
       seasonPhase: s.seasonPhase || 'regular', regGames: s.regGames || 0, regWins: s.regWins || 0,
+      conf: s.conf || 'E', playin: s.playin || null,
       playoffRound: s.playoffRound || 0, seriesWins: s.seriesWins || 0, seriesLosses: s.seriesLosses || 0,
       rookies: s.rookies || [], league: s.league || null, awards: s.awards || null, fmvp: s.fmvp || null,
       history: s.history || [], pendingDraft: s.pendingDraft || null,
     });
+    // 兼容旧版联盟存档（8队/旧对阵结构）：结构不符则回退到常规赛重建
+    if (t.league && (!t.league.teams || t.league.teams.length < LEAGUE_SIZE
+        || (t.league.bracket && !t.league.bracket.east))) {
+      t.league = null; t.playin = null;
+      if (t.seasonPhase === 'playoff' || t.seasonPhase === 'playin') {
+        t.seasonPhase = 'regular'; t.playoffRound = 0; t.seriesWins = 0; t.seriesLosses = 0;
+      }
+    }
     if (s.stats) t.stats = Object.assign(t.stats, s.stats);
     if (s.claimed) t.claimed = Object.assign({}, s.claimed);
     t.facilities = Object.assign(t.facilities, s.facilities);
@@ -1085,6 +1284,8 @@ const App = (() => {
         </div>
       </span>`;
     html += `<button class="topbtn" onclick="App.openStore('recharge')">🛒 充值</button>`;
+    html += `<button class="topbtn" onclick="App.openStore('diamond')">💎 钻石商店</button>`;
+    html += `<button class="topbtn" onclick="App.openEventCenter()">🎈 活动中心</button>`;
     if (gameMode === 'single') html += `<button class="topbtn" onclick="App.manualSave()">💾 保存</button>`;
     html += `<button class="topbtn" onclick="App.openSettings()">⚙️ 设置</button>`;
     html += `<button class="topbtn" onclick="App.quitToMenu()">🚪 返回菜单</button>`;
@@ -1217,7 +1418,6 @@ const App = (() => {
         <div class="upgrades">${upgrades}</div>
         <div class="section-title">📋 球队任务</div>
         <div class="tasks">${tasks}</div>
-        <div style="margin-top:12px;"><button class="topbtn" style="width:100%;background:linear-gradient(90deg,#5bc0ff,#1677ff)" onclick="App.openStore('diamond',${idx})">💎 钻石商店</button></div>
         <div class="game-log" id="log-${idx}"></div>
       </div>`;
   }
@@ -1262,6 +1462,11 @@ const App = (() => {
     if (team.won) return;
     // 休赛期：按钮转为进入选秀
     if (gameMode === 'single' && team.seasonPhase === 'offseason') { openDraft(idx); return; }
+    // 必须凑齐 5 个位置的球员才能出战
+    if (!lineupComplete(team)) {
+      Sound.play('error');
+      return toast('阵容不完整：请先在 ' + emptyPositions(team).join('、') + ' 位置签下球员');
+    }
     const now = Date.now();
     if (now - team.lastMatchAt < MATCH_COOLDOWN) { Sound.play('error'); return toast('比赛冷却中'); }
     team.lastMatchAt = now;
@@ -1309,37 +1514,79 @@ const App = (() => {
       pushLog(team, `🏀 常规赛 ${win ? '胜' : '负'} ${opp.name} ${myScore}:${oppScore}（${team.regWins}-${team.regGames - team.regWins}）`, win ? 'hl' : '');
       if (team.regGames >= REGULAR_GAMES) {
         computeAwards(team);                       // 常规赛结束颁奖
-        const seeded = standings(team);
-        const myRank = seeded.findIndex(t => t.isPlayer) + 1;
-        const inPlayoff = myRank <= LEAGUE_SIZE && team.regWins >= PLAYOFF_NEED;
-        if (inPlayoff) {
-          buildBracket(team);
+        const confName = team.conf === 'E' ? '东部' : '西部';
+        const myRank = playerConfRank(team);       // 分区名次
+        team.nextOpp = null;
+        if (myRank <= DIRECT_SEEDS) {              // 前 6 直接晋级
+          buildBracket(team, null);
           team.seasonPhase = 'playoff'; team.playoffRound = 1; team.seriesWins = 0; team.seriesLosses = 0;
-          extra = `<br><b style="color:var(--gold)">🎟️ 常规赛 ${team.regWins}胜${team.regGames - team.regWins}负，以第 ${myRank} 种子晋级季后赛！</b>`;
-          pushLog(team, `🎟️ 常规赛收官 ${team.regWins}-${team.regGames - team.regWins}，第${myRank}种子晋级季后赛！`, 'win');
-          toast('🎟️ 晋级季后赛！'); Sound.play('reward');
+          extra = `<br><b style="color:var(--gold)">🎟️ ${confName}第 ${myRank} 名，直接晋级季后赛！</b>`;
+          pushLog(team, `🎟️ 常规赛收官 ${team.regWins}-${team.regGames - team.regWins}，${confName}第${myRank}种子直接晋级季后赛！`, 'win');
+          toast('🎟️ 直接晋级季后赛！'); Sound.play('reward');
           showAwardsCeremony(team, false);
-        } else {
-          buildBracket(team); simulateRemainingBracket(team);
+        } else if (myRank <= PLAYIN_HIGH) {        // 7-10 进入附加赛
+          startPlayin(team);
+          extra = `<br><b style="color:var(--orange)">🎫 ${confName}第 ${myRank} 名，进入附加赛争夺季后赛席位！</b>`;
+          pushLog(team, `🎫 ${confName}第${myRank}名，进入附加赛！`, 'hl');
+          toast('🎫 进入附加赛！'); Sound.play('reward');
+          showAwardsCeremony(team, false);
+        } else {                                   // 11 名开外，无缘
+          buildBracket(team, null); simulateRemainingBracket(team);
           recordHistory(team, false);
-          extra = `<br><b style="color:var(--nba-red)">常规赛 ${team.regWins} 胜，第 ${myRank} 位无缘季后赛</b>`;
-          pushLog(team, `❌ 常规赛 ${team.regWins}胜，未能晋级季后赛`, '');
+          extra = `<br><b style="color:var(--nba-red)">${confName}第 ${myRank} 位，无缘季后赛</b>`;
+          pushLog(team, `❌ ${confName}第${myRank}名，未能晋级季后赛`, '');
           showAwardsCeremony(team, true);
+        }
+      }
+    } else if (team.seasonPhase === 'playin') {
+      const pi = team.playin; team.nextOpp = null;
+      pushLog(team, `${win ? '✅' : '❌'} 附加赛 ${opp.name} ${myScore}:${oppScore}`, win ? 'hl' : '');
+      if (pi.stage === 'A') {                       // 7v8
+        if (win) {
+          extra = `<br><b style="color:var(--gold)">🎟️ 附加赛取胜，锁定第 7 种子，晋级季后赛！</b>`;
+          pushLog(team, `🎟️ 附加赛胜，第7种子晋级季后赛！`, 'win'); toast('晋级季后赛！'); Sound.play('reward');
+          finishPlayinQualify(team, idx, 7);
+        } else {
+          const seeds = standings(team, team.conf);
+          const gB = simGame(seeds[8], seeds[9]);
+          pi.seed7Id = pi.oppId; pi.oppId = gB.winner.id; pi.stage = 'C';
+          extra = `<br><b style="color:var(--orange)">首场附加赛失利，进入保级附加赛——再胜一场即可拿到最后席位！</b>`;
+          pushLog(team, `附加赛首战失利，转入保级附加赛`, '');
+        }
+      } else if (pi.stage === 'B') {                // 9v10
+        if (!win) {
+          extra = `<br><b style="color:var(--nba-red)">附加赛失利，无缘季后赛</b>`;
+          pushLog(team, `❌ 附加赛出局`, ''); eliminateInPlayin(team, idx);
+        } else {
+          pi.oppId = pi.gameALoserId; pi.stage = 'C';
+          extra = `<br><b style="color:var(--orange)">附加赛首胜！进入保级附加赛抢最后席位！</b>`;
+          pushLog(team, `附加赛首胜，进入保级附加赛`, 'hl');
+        }
+      } else {                                      // 保级附加赛
+        if (win) {
+          extra = `<br><b style="color:var(--gold)">🎟️ 保级附加赛取胜，以第 8 种子晋级季后赛！</b>`;
+          pushLog(team, `🎟️ 保级附加赛胜，第8种子晋级季后赛！`, 'win'); toast('晋级季后赛！'); Sound.play('reward');
+          finishPlayinQualify(team, idx, 8);
+        } else {
+          extra = `<br><b style="color:var(--nba-red)">保级附加赛失利，无缘季后赛</b>`;
+          pushLog(team, `❌ 保级附加赛出局`, ''); eliminateInPlayin(team, idx);
         }
       }
     } else if (team.seasonPhase === 'playoff') {
       if (win) team.seriesWins++; else team.seriesLosses++;
-      const roundName = PLAYOFF_ROUND_NAMES[team.playoffRound] || '季后赛';
+      const curRound = currentPlayoffRound(team);
+      const roundName = PLAYOFF_ROUND_NAMES[curRound] || '季后赛';
       pushLog(team, `${win ? '✅' : '❌'} ${roundName} ${opp.name} ${myScore}:${oppScore}（系列赛 ${team.seriesWins}-${team.seriesLosses}）`, win ? 'hl' : '');
       if (team.seriesWins >= SERIES_WIN) {
+        const wasFinals = curRound === 4;
         advanceBracket(team, true);
-        if (team.playoffRound >= 3) {
+        if (wasFinals) {
           winChampionship(team);
           extra = `<br><b style="color:var(--gold)">🏆 赢下总决赛，夺得总冠军！</b>`;
           if (resEl) resEl.innerHTML = head + extra;
           return;
         }
-        team.playoffRound++; team.seriesWins = 0; team.seriesLosses = 0;
+        team.playoffRound = currentPlayoffRound(team); team.seriesWins = 0; team.seriesLosses = 0; team.nextOpp = null;
         const next = PLAYOFF_ROUND_NAMES[team.playoffRound];
         extra = `<br><b style="color:var(--gold)">系列赛 ${SERIES_WIN} 胜，晋级${next}！</b>`;
         pushLog(team, `🏆 晋级${next}！`, 'win'); toast(`晋级${next}！`); Sound.play('reward');
@@ -1379,7 +1626,7 @@ const App = (() => {
     team.seasonPhase = 'regular';
     team.regGames = 0; team.regWins = 0;
     team.playoffRound = 0; team.seriesWins = 0; team.seriesLosses = 0;
-    team.nextOpp = null;
+    team.nextOpp = null; team.playin = null;
     team.awards = null; team.fmvp = null;
     buildLeague(team);
   }
@@ -1409,16 +1656,27 @@ const App = (() => {
       if (btn) { btn.disabled = false; btn.textContent = '🎓 进入选秀大会'; }
       return;
     }
+    // 阵容未凑齐 5 个位置：禁止出战
+    if (!lineupComplete(team)) {
+      if (prev) prev.innerHTML = `<div class="opp-vs" style="text-align:center;color:var(--orange)">⚠️ 阵容不完整 · 请先签下 <b>${emptyPositions(team).join('、')}</b></div>`;
+      if (btn) { btn.disabled = true; btn.textContent = '🔒 阵容未满 5 人'; }
+      return;
+    }
     if (!team.nextOpp && !team.won) team.nextOpp = genOpponent(team);
     // 兼容旧存档：阵容不足 5 人则按新规则重新生成
     if (team.nextOpp && (!team.nextOpp.lineup || team.nextOpp.lineup.length < 5)) team.nextOpp = genOpponent(team);
     const opp = team.nextOpp;
     const myPow = teamPower(team);
+    const piStageName = { A: '附加赛 7/8 名之争', B: '附加赛 9/10 名之争', C: '保级附加赛（末席之争）' };
     if (opp && prev) {
       const wc = Math.round(matchWinChance(myPow, opp.power) * 100);
       const lineup = opp.lineup.map(p => `${p.pos ? '<b style="color:var(--muted)">' + p.pos + '</b> ' : ''}${esc(p.cn)}<span class="star">★${p.rating}</span>`).join('、');
-      const tag = (gameMode === 'single' && team.seasonPhase === 'playoff')
-        ? `<span style="color:var(--gold)">${PLAYOFF_ROUND_NAMES[team.playoffRound] || '季后赛'} · 系列赛 ${team.seriesWins}-${team.seriesLosses}</span>` : '';
+      let tag = '';
+      if (gameMode === 'single' && team.seasonPhase === 'playoff') {
+        tag = `<span style="color:var(--gold)">${PLAYOFF_ROUND_NAMES[currentPlayoffRound(team)] || '季后赛'} · 系列赛 ${team.seriesWins}-${team.seriesLosses}（7局4胜）</span>`;
+      } else if (gameMode === 'single' && team.seasonPhase === 'playin' && team.playin) {
+        tag = `<span style="color:var(--orange)">🎫 ${piStageName[team.playin.stage] || '附加赛'} · 单场定胜负</span>`;
+      }
       prev.innerHTML = `
         ${tag ? `<div style="font-size:11px;margin-bottom:4px;">${tag}</div>` : ''}
         <div class="opp-row"><span class="opp-name">🆚 ${esc(opp.name)}</span><span class="opp-pow">对手战力 ${fmt(opp.power)}</span></div>
@@ -1427,9 +1685,9 @@ const App = (() => {
     }
     if (btn && !btn.disabled) {
       if (gameMode === 'single') {
-        btn.textContent = team.seasonPhase === 'playoff'
-          ? '⚔️ ' + (PLAYOFF_ROUND_NAMES[team.playoffRound] || '季后赛') + ' · 下一场'
-          : '⚔️ 进行常规赛';
+        if (team.seasonPhase === 'playoff') btn.textContent = '⚔️ ' + (PLAYOFF_ROUND_NAMES[currentPlayoffRound(team)] || '季后赛') + ' · 下一场';
+        else if (team.seasonPhase === 'playin') btn.textContent = '🎫 附加赛 · 出战';
+        else btn.textContent = '⚔️ 进行常规赛';
       } else {
         btn.textContent = '⚔️ 发起一场比赛';
       }
@@ -1513,12 +1771,21 @@ const App = (() => {
       const remain = team.goal - team.funds, eta = document.getElementById('eta-' + idx);
       if (eta) eta.textContent = remain <= 0 ? '已达成' : (rate > 0 ? '约 ' + fmtTime(remain / rate) : '签约球员以产出');
     } else {
-      // 赛季阶段进度：常规赛进度 / 季后赛系列赛进度
+      // 赛季阶段进度：常规赛 / 附加赛 / 季后赛 / 休赛期
       let phaseText, recText, progress;
       if (team.seasonPhase === 'playoff') {
-        phaseText = '季后赛 · ' + (PLAYOFF_ROUND_NAMES[team.playoffRound] || '');
-        recText = `${PLAYOFF_ROUND_NAMES[team.playoffRound] || '系列赛'} ${team.seriesWins}-${team.seriesLosses}（7局4胜）`;
+        const cr = currentPlayoffRound(team);
+        phaseText = '季后赛 · ' + (PLAYOFF_ROUND_NAMES[cr] || '');
+        recText = `${PLAYOFF_ROUND_NAMES[cr] || '系列赛'} ${team.seriesWins}-${team.seriesLosses}（7局4胜）`;
         progress = Math.min(100, (team.seriesWins / SERIES_WIN) * 100);
+      } else if (team.seasonPhase === 'playin') {
+        phaseText = '附加赛';
+        recText = '附加赛 · 争夺季后赛席位';
+        progress = 100;
+      } else if (team.seasonPhase === 'offseason') {
+        phaseText = '休赛期';
+        recText = '选秀大会进行中';
+        progress = 100;
       } else {
         phaseText = '常规赛';
         recText = `常规赛 ${team.regGames}/${REGULAR_GAMES} · ${team.regWins}胜${team.regGames - team.regWins}负`;
@@ -1606,6 +1873,82 @@ const App = (() => {
     renderStore(tab || 'recharge');
   }
   function closeStore() { const m = document.getElementById('store-modal'); if (m) m.classList.remove('show'); }
+
+  // ---------- 活动中心 ----------
+  function openEventCenter() {
+    ensureModal('event-center-modal').classList.add('show');
+    renderEventCenter();
+  }
+  function closeEventCenter() { const m = document.getElementById('event-center-modal'); if (m) m.classList.remove('show'); }
+  function actCardHTML(act) {
+    let btn;
+    if (act.action === 'recharge') {
+      btn = `<button class="act-btn go" onclick="App.closeEventCenter();App.openStore('recharge')">前往充值</button>`;
+    } else {
+      const ok = actClaimable(act);
+      const rewardTxt = `${act.dia ? '💎' + act.dia : ''}${act.fundSec ? ' 💰资金礼包' : ''}`.trim();
+      btn = ok
+        ? `<button class="act-btn" onclick="App.claimActivity('${act.id}')">领取 ${rewardTxt}</button>`
+        : `<button class="act-btn done" disabled>${act.type === 'once' ? '已领取' : '今日已领'}</button>`;
+    }
+    return `<div class="act-item">
+        <div class="act-ico">${act.icon}</div>
+        <div class="act-info">
+          <div class="act-n">${act.name}${act.tag ? `<span class="act-tag">${act.tag}</span>` : ''}</div>
+          <div class="act-d">${act.desc}</div>
+        </div>
+        ${btn}
+      </div>`;
+  }
+  function renderEventCenter() {
+    const m = ensureModal('event-center-modal');
+    const live = curEvent
+      ? `<div class="act-live">⭐ 全服限时活动进行中：<b>${curEvent.name}</b> · ${curEvent.desc}</div>`
+      : '';
+    const sections = Object.keys(ACTIVITIES).map(cat => {
+      const meta = ACT_CAT_META[cat];
+      return `<div class="act-sec">
+          <div class="act-sec-h">${meta.icon} ${meta.name}</div>
+          ${ACTIVITIES[cat].map(actCardHTML).join('')}
+        </div>`;
+    }).join('');
+    m.innerHTML = `
+      <div class="card wide" style="max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div class="brand" style="margin-bottom:10px;"><h1 style="font-size:28px;">🎈 活动中心</h1></div>
+        ${live}
+        <div style="overflow-y:auto;padding-right:4px;">${sections}</div>
+        <button class="btn" style="margin-top:14px;" onclick="App.closeEventCenter()">关闭</button>
+      </div>`;
+  }
+  function findActivity(id) {
+    for (const cat of Object.keys(ACTIVITIES)) {
+      const a = ACTIVITIES[cat].find(x => x.id === id);
+      if (a) return a;
+    }
+    return null;
+  }
+  function claimActivity(id) {
+    const act = findActivity(id);
+    if (!act || act.action === 'recharge') return;
+    if (!actClaimable(act)) { Sound.play('error'); return toast('该活动暂不可领取'); }
+    let msg = '';
+    if (act.dia) { addDiamonds(act.dia); msg += `💎+${act.dia} `; }
+    if (act.fundSec) {
+      const team = teams[0];
+      if (team) {
+        const gain = fundsPerSec(team) * act.fundSec + 100;
+        team.funds += gain; team.totalEarned += gain;
+        pushLog(team, `🎈 活动「${act.name}」奖励到账 +${fmt(gain)}`, 'win');
+        msg += `资金+${fmt(gain)} `;
+        refreshTeam(0);
+      }
+    }
+    setActClaim(id, act.type === 'once' ? 'done' : todayKey());
+    Sound.play('reward'); Sound.vibrate([10, 30, 10]);
+    toast(`领取成功！${msg}`);
+    renderEventCenter();
+  }
+
 
   function renderStore(tab) {
     const m = ensureModal('store-modal');
@@ -1741,12 +2084,14 @@ const App = (() => {
     const team = teams[leagueTeamIdx]; if (!team) return;
     ensureLeague(team);
     leagueTab = tab || 'standings';
+    standingsConf = team.conf || 'E';
     ensureModal('league-modal').classList.add('show');
     renderLeague();
   }
   function closeLeague() { const m = document.getElementById('league-modal'); if (m) m.classList.remove('show'); }
   function setLeagueTab(t) { leagueTab = t; renderLeague(); }
   function setStatBoard(b) { statBoard = b; renderLeague(); }
+  function setStandingsConf(c) { standingsConf = c; renderLeague(); }
   function setStatGroup(g) { statGroup = g; renderLeague(); }
 
   function renderLeague() {
@@ -1778,13 +2123,22 @@ const App = (() => {
   }
 
   function renderStandings(team) {
-    const arr = standings(team);
-    const phase = team.seasonPhase === 'playoff' ? '（季后赛已开打）' : team.seasonPhase === 'offseason' ? '（赛季已结束）' : `（常规赛 ${team.regGames}/${REGULAR_GAMES}）`;
+    const conf = standingsConf;
+    const confName = conf === 'E' ? '东部' : '西部';
+    const arr = standings(team, conf);
+    const phase = team.seasonPhase === 'playoff' ? '（季后赛进行中）'
+      : team.seasonPhase === 'playin' ? '（附加赛进行中）'
+      : team.seasonPhase === 'offseason' ? '（赛季已结束）'
+      : `（常规赛 ${team.regGames}/${REGULAR_GAMES}）`;
     const rows = arr.map((t, i) => {
       const gp = t.w + t.l, wp = gp ? (t.w / gp * 100).toFixed(1) : '0.0';
-      const seedTag = i < LEAGUE_SIZE ? `<span class="seed">${i + 1}</span>` : '';
-      return `<tr class="${t.isPlayer ? 'me' : ''}">
-        <td style="text-align:center">${seedTag}</td>
+      const rank = i + 1;
+      let seedCls = 'seed', zone = '';
+      if (rank <= DIRECT_SEEDS) { zone = 'z-direct'; }
+      else if (rank <= PLAYIN_HIGH) { seedCls = 'seed playin'; zone = 'z-playin'; }
+      else { seedCls = 'seed out'; }
+      return `<tr class="${t.isPlayer ? 'me' : ''} ${zone}">
+        <td style="text-align:center"><span class="${seedCls}">${rank}</span></td>
         <td>${esc(t.name)}${t.isPlayer ? ' <span class="metag">我</span>' : ''}</td>
         <td style="text-align:center">${t.w}</td>
         <td style="text-align:center">${t.l}</td>
@@ -1792,9 +2146,14 @@ const App = (() => {
         <td style="text-align:center">${fmt(t.str)}</td>
       </tr>`;
     }).join('');
-    return `<p class="lg-note">按胜率排名，前 ${LEAGUE_SIZE} 名进入季后赛 ${phase}</p>
+    return `<div class="lg-subtabs">
+        <button class="lg-stab ${conf === 'E' ? 'active' : ''}" onclick="App.setStandingsConf('E')">东部</button>
+        <button class="lg-stab ${conf === 'W' ? 'active' : ''}" onclick="App.setStandingsConf('W')">西部</button>
+        ${team.conf === conf ? '<span class="lg-gap"></span><span class="metag">你的分区</span>' : ''}
+      </div>
+      <p class="lg-note">${confName}排名 ${phase}　<b style="color:var(--gold)">1-6</b> 直接晋级季后赛，<b style="color:var(--orange)">7-10</b> 进入附加赛</p>
       <table class="lg-table">
-        <thead><tr><th>种子</th><th>球队</th><th>胜</th><th>负</th><th>胜率</th><th>战力</th></tr></thead>
+        <thead><tr><th>名次</th><th>球队</th><th>胜</th><th>负</th><th>胜率</th><th>战力</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
   }
@@ -1838,26 +2197,31 @@ const App = (() => {
 
   function renderBracket(team) {
     const br = team.league.bracket;
-    if (!br) return `<p class="lg-note">季后赛对阵图将在<b>常规赛结束</b>后、按战绩种子排定生成。当前为常规赛阶段。</p>`;
-    const titles = ['季后赛首轮', '分区决赛', '总决赛'];
-    const seriesCell = (m, ri) => {
-      if (!m) return '';
+    if (!br) return `<p class="lg-note">季后赛对阵图将在<b>常规赛（及附加赛）结束</b>后、按东西部战绩种子排定生成。</p>`;
+    const titles = ['首轮', '分区半决赛', '分区决赛'];
+    const live = team.seasonPhase === 'playoff';
+    const seriesCell = (m) => {
+      if (!m) return '<div class="bk-match empty">待定</div>';
       const aWin = m.winner && m.a && m.winner.name === m.a.name, bWin = m.winner && m.b && m.winner.name === m.b.name;
       const line = (t, won, score) => t ? `<div class="bk-team ${t.isPlayer ? 'me' : ''} ${won ? 'win' : (m.winner ? 'out' : '')}">
         <span class="bk-seed">${t.seed || ''}</span><span class="bk-name">${esc(t.name)}</span><span class="bk-score">${score}</span></div>` : '<div class="bk-team empty">待定</div>';
-      const playerHere = m.hasPlayer && !m.winner && team.seasonPhase === 'playoff';
+      const playerHere = m.hasPlayer && !m.winner && live;
       return `<div class="bk-match ${playerHere ? 'live' : ''}">
-        ${line(m.a, aWin, m.a && m.a.isPlayer ? team.seriesWins : m.aw)}
-        ${line(m.b, bWin, m.b && m.b.isPlayer ? team.seriesLosses : m.bw)}
+        ${line(m.a, aWin, m.a && m.a.isPlayer && live ? team.seriesWins : m.aw)}
+        ${line(m.b, bWin, m.b && m.b.isPlayer && live ? team.seriesLosses : m.bw)}
         ${playerHere ? '<div class="bk-live">进行中</div>' : ''}
       </div>`;
     };
-    const cols = br.rounds.map((round, ri) => {
-      const cells = (round && round.length) ? round.map(m => seriesCell(m, ri)).join('') : '<div class="bk-match empty">—</div>';
-      return `<div class="bk-col"><div class="bk-title">${titles[ri]}</div>${cells}</div>`;
-    }).join('');
+    const confCols = (confBr) => (confBr.rounds.map((round, ri) =>
+      `<div class="bk-col"><div class="bk-title">${titles[ri]}</div>${(round && round.length) ? round.map(seriesCell).join('') : '<div class="bk-match empty">待定</div>'}</div>`
+    ).join(''));
+    const finalsCol = `<div class="bk-col"><div class="bk-title" style="color:var(--gold)">总决赛</div>${seriesCell(br.finals)}</div>`;
     const champ = br.champion ? `<div class="bk-champ">🏆 总冠军：<b>${esc(br.champion.name)}</b>${br.champion.isPlayer ? '（你的球队！）' : ''}</div>` : '';
-    return `<p class="lg-note">7局4胜制 · ★ 标注为你的球队所在对阵</p><div class="bracket">${cols}</div>${champ}`;
+    return `<p class="lg-note">东西部各 8 队 · 7局4胜 · <span class="metag">我</span> 标注你的球队</p>
+      <div class="bk-conf"><div class="bk-conf-h east">🟦 东部</div><div class="bracket">${confCols(br.east)}</div></div>
+      <div class="bk-conf finals"><div class="bk-conf-h gold">🏆 总决赛</div><div class="bracket">${finalsCol}</div></div>
+      <div class="bk-conf"><div class="bk-conf-h west">🟥 西部</div><div class="bracket">${confCols(br.west)}</div></div>
+      ${champ}`;
   }
 
   function renderAwards(team) {
@@ -1908,12 +2272,13 @@ const App = (() => {
       <div class="aw-info"><div class="aw-name">${def.name}</div>
         <div class="aw-win">${esc(w.name)}${w.isMine ? ' <span class="metag">我</span>' : ''} <span class="sub2">★${w.rating}</span></div>
         <div class="aw-stat">${w.stats.pts}分 ${w.stats.reb}板 ${w.stats.ast}助</div></div></div>` : '';
+    const btnText = eliminated ? '进入选秀大会' : (team.seasonPhase === 'playin' ? '🎫 出战附加赛' : '进军季后赛');
     m.innerHTML = `
       <div class="card" style="max-width:480px;max-height:88vh;overflow-y:auto;">
         <div class="brand" style="margin-bottom:8px;"><h1 style="font-size:24px;">🏅 常规赛颁奖典礼</h1>
           <div class="sub" style="font-size:12px;">第 ${team.season} 赛季</div></div>
         <div class="award-grid">${AWARDS.map(d => item(d, a[d.key])).join('')}</div>
-        <button class="btn" style="margin-top:14px;" onclick="App.closeCeremony()">${eliminated ? '进入选秀大会' : '进军季后赛'}</button>
+        <button class="btn" style="margin-top:14px;" onclick="App.closeCeremony()">${btnText}</button>
       </div>`;
   }
   function closeCeremony() {
@@ -1998,6 +2363,7 @@ const App = (() => {
       players: team.players, facilities: team.facilities, totalEarned: team.totalEarned,
       matches: team.matches, wins: team.wins,
       seasonPhase: team.seasonPhase, regGames: team.regGames, regWins: team.regWins,
+      conf: team.conf, playin: team.playin,
       playoffRound: team.playoffRound, seriesWins: team.seriesWins, seriesLosses: team.seriesLosses,
       rookies: team.rookies, league: team.league, awards: team.awards, fmvp: team.fmvp,
       history: team.history, pendingDraft: team.pendingDraft,
@@ -2041,8 +2407,9 @@ const App = (() => {
           <div class="rule-block"><h3>⭐ 限时活动</h3>
             <p>全服轮换：全明星周末（产出×2）、季后赛奖金（比赛×3）、球迷狂欢节（点击×4）、选秀大会（签约-40%）、总决赛热潮（全场×2.5），把握时机收益翻倍。</p></div>
           <div class="rule-block"><h3>🏆 真实赛制 · 可持续王朝（单人）</h3>
-            <p><b>常规赛</b>：每赛季打 <b>${REGULAR_GAMES}</b> 场常规赛，胜场达到 <b>${PLAYOFF_NEED}</b> 胜（≥50%）即可<b>晋级季后赛</b>，否则进入下赛季重来。</p>
-            <p><b>季后赛</b>：依次进行<b>首轮 → 分区决赛 → 总决赛</b>三轮，每轮<b>7局4胜</b>制系列赛；连胜三轮即夺得<b>总冠军</b>。</p>
+            <p><b>联盟</b>：30 支真实球队分<b>东、西部各 15 队</b>，玩家归属东部。常规赛打 <b>${REGULAR_GAMES}</b> 场，全联盟战绩同步推进。</p>
+            <p><b>排名与晋级</b>：按分区胜率排名，本区<b>前 6 名直接晋级</b>季后赛；<b>第 7-10 名</b>进入<b>附加赛</b>争夺最后 2 个席位。</p>
+            <p><b>季后赛</b>：东西部各 8 队，依次进行<b>首轮 → 分区半决赛 → 分区决赛</b>（均为 <b>7局4胜</b>），两区冠军会师<b>总决赛</b>决出总冠军。</p>
             <p><b>王朝加成</b>：每夺一冠获得<b>永久 +5% 全局产出与战力加成</b>及钻石奖励，随后自动开启新赛季，<b>无限运营</b>。</p></div>
           <div class="rule-block"><h3>🛒 充值与钻石</h3>
             <p>支持 <b>Google Play / 微信支付 / 支付宝 / Apple Pay</b> 充值钻石（原型演示，模拟流程不扣费）。</p>
@@ -2171,8 +2538,44 @@ const App = (() => {
     setTimeout(() => el.remove(), 900);
   }
 
+  // ---------- 全屏 ----------
+  // 是否已处于独立/全屏运行（PWA 主屏启动或浏览器全屏）
+  function isStandaloneOrFs() {
+    return window.matchMedia('(display-mode: fullscreen)').matches
+      || window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true
+      || !!document.fullscreenElement;
+  }
+  // 根据当前状态刷新全屏按钮的显隐与图标
+  function refreshFsBtn() {
+    const btn = document.getElementById('fs-btn');
+    if (!btn) return;
+    // PWA 主屏启动（standalone/fullscreen）时本就全屏，隐藏按钮
+    const pwa = window.matchMedia('(display-mode: fullscreen)').matches
+      || window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+    if (pwa) { btn.style.display = 'none'; return; }
+    btn.style.display = '';
+    btn.textContent = document.fullscreenElement ? '🗗' : '⛶';
+    btn.title = document.fullscreenElement ? '退出全屏' : '进入全屏';
+  }
+  function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) {
+        (document.exitFullscreen || document.webkitExitFullscreen || function(){}).call(document);
+      } else {
+        const el = document.documentElement;
+        (el.requestFullscreen || el.webkitRequestFullscreen || function(){ toast && toast('当前设备不支持网页全屏，请用"添加到主屏幕"'); }).call(el);
+      }
+    } catch { toast && toast('全屏切换失败'); }
+    setTimeout(refreshFsBtn, 200);
+  }
+
   // ---------- 启动 ----------
   function init() {
+    refreshFsBtn();
+    document.addEventListener('fullscreenchange', refreshFsBtn);
+    document.addEventListener('webkitfullscreenchange', refreshFsBtn);
     switchAuthTab('login');
     Sound.applyQuality();
     Sound.applyBackground();
@@ -2201,9 +2604,11 @@ const App = (() => {
     shoot, buyPlayer, buyFacility, playMatch, claimTask,
     openStore, closeStore, renderStore, openPay, closePay, doPay, finishPay,
     buyDiamondItem, closeOffline,
-    openLeague, closeLeague, setLeagueTab, setStatBoard, setStatGroup,
+    openEventCenter, closeEventCenter, claimActivity,
+    openLeague, closeLeague, setLeagueTab, setStatBoard, setStatGroup, setStandingsConf,
     closeCeremony, closeFmvp, openDraft, draftPick,
     manualSave, quitToMenu, showRules, closeRules, backToMenuFromVictory,
     openSettings, closeSettings, renderSettings, setSetting, previewSfx,
+    toggleFullscreen,
   };
 })();

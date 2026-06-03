@@ -1,5 +1,5 @@
 // Service Worker - 王朝传奇 PWA 离线缓存
-const CACHE = 'nba-dynasty-v8';
+const CACHE = 'nba-dynasty-v12';
 // 核心文件：必须缓存成功（缺一不可，决定能否离线启动）
 const CORE = [
   './',

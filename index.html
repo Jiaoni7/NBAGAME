@@ -481,6 +481,29 @@
     color:#0b0e1a; background:linear-gradient(90deg,#9fe0ff,#5bc0ff); display:flex; align-items:center; gap:4px; }
   .gem-buy:disabled { background:#2a3358; color:#6f7aa0; cursor:not-allowed; }
 
+  /* ===== 活动中心 ===== */
+  .act-live { background:linear-gradient(90deg,rgba(247,144,30,0.15),rgba(255,213,74,0.12));
+    border:1px solid var(--orange); border-radius:10px; padding:9px 12px; font-size:12px;
+    margin-bottom:14px; color:var(--txt); }
+  .act-live b { color:var(--gold); }
+  .act-sec { margin-bottom:16px; }
+  .act-sec-h { font-size:14px; font-weight:800; color:var(--orange); margin-bottom:8px;
+    padding-bottom:5px; border-bottom:1px solid var(--line); }
+  .act-item { display:flex; align-items:center; gap:12px; padding:11px 12px; background:var(--panel);
+    border:1px solid var(--line); border-radius:12px; margin-bottom:10px; }
+  .act-ico { font-size:28px; flex-shrink:0; }
+  .act-info { flex:1; min-width:0; }
+  .act-n { font-size:14px; font-weight:700; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .act-tag { font-size:10px; font-weight:700; color:#fff; background:var(--nba-red);
+    border-radius:5px; padding:1px 6px; }
+  .act-d { font-size:11px; color:var(--muted); margin-top:3px; line-height:1.4; }
+  .act-btn { flex-shrink:0; border:none; border-radius:8px; padding:8px 12px; font-size:12px;
+    font-weight:700; cursor:pointer; color:#0b0e1a;
+    background:linear-gradient(90deg,var(--gold),var(--orange)); white-space:nowrap; }
+  .act-btn.go { color:#fff; background:linear-gradient(90deg,#9fe0ff,#1677ff); }
+  .act-btn.done, .act-btn:disabled { background:#2a3358; color:#6f7aa0; cursor:not-allowed; }
+
+
   /* ===== 移动端适配 ===== */
   html { -webkit-text-size-adjust: 100%; }
   body { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
@@ -662,6 +685,10 @@
   .seed { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px;
     border-radius:50%; background:linear-gradient(135deg,var(--nba-blue),var(--nba-red));
     color:#fff; font-size:11px; font-weight:700; }
+  .seed.playin { background:linear-gradient(135deg,#3a8f4f,#2f6e8f); }
+  .seed.out { background:var(--panel2); color:var(--muted); border:1px solid var(--line); }
+  .lg-table tr.z-direct td:first-child { box-shadow:inset 3px 0 0 var(--nba-blue); }
+  .lg-table tr.z-playin td:first-child { box-shadow:inset 3px 0 0 #3a8f4f; }
   .metag { display:inline-block; font-size:10px; font-weight:700; color:#fff;
     background:var(--orange); border-radius:5px; padding:1px 5px; vertical-align:middle; }
   .sub2 { font-size:10px; color:var(--muted); margin-top:2px; }
@@ -708,6 +735,14 @@
     background:linear-gradient(90deg,rgba(255,213,74,0.15),rgba(247,144,30,0.15));
     border:1px solid var(--gold); border-radius:10px; padding:10px; }
   .bk-champ b { color:var(--gold); }
+  .bk-conf { background:rgba(255,255,255,0.02); border:1px solid var(--line);
+    border-radius:12px; padding:8px 10px 4px; margin-bottom:12px; }
+  .bk-conf.finals { border-color:var(--gold);
+    background:linear-gradient(180deg,rgba(255,213,74,0.08),rgba(255,255,255,0.02)); }
+  .bk-conf-h { font-size:13px; font-weight:800; margin-bottom:6px; letter-spacing:.5px; }
+  .bk-conf-h.east { color:var(--nba-blue); }
+  .bk-conf-h.west { color:var(--nba-red); }
+  .bk-conf-h.gold { color:var(--gold); text-align:center; }
 
   /* 奖项卡片 */
   .award-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -737,9 +772,24 @@
   .dft-rating { font-size:12px; color:var(--muted); }
   .dft-rating b { color:var(--gold); font-size:14px; }
 
+  /* 全屏切换悬浮按钮 */
+  .fs-btn { position: fixed; right: calc(12px + env(safe-area-inset-right));
+    bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 9999;
+    width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line);
+    background: rgba(20,26,48,0.78); color: var(--txt); font-size: 18px; line-height: 1;
+    cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4); transition: .18s; }
+  .fs-btn:hover { border-color: var(--orange); background: rgba(247,144,30,0.18);
+    transform: scale(1.06); }
+  .fs-btn:active { transform: scale(0.94); }
+
 </style>
 </head>
 <body>
+
+<!-- 全屏切换按钮（PWA 主屏启动时自动隐藏） -->
+<button id="fs-btn" class="fs-btn" onclick="App.toggleFullscreen()" title="进入全屏" aria-label="全屏">⛶</button>
+
 
 <!-- ===================== 一级：登录 / 注册 ===================== -->
 <div id="screen-login" class="screen active">
