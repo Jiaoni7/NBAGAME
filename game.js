@@ -374,6 +374,25 @@ const App = (() => {
   // ---------- 联盟模拟：球队 / 球员名库 ----------
   const LEAGUE_SIZE = 8;          // 联盟球队数（含玩家），8→4→2→1 三轮季后赛
   const AI_TEAM_NAMES = ['湖人','凯尔特人','勇士','公牛','马刺','热火','雄鹿','掘金','76人','快船','太阳','篮网','尼克斯','独行侠','森林狼','鹈鹕'];
+  // ---------- 2025-26 赛季真实首发名单（PG/SG/SF/PF/C 五人，含真实交易：东契奇加盟湖人、文班亚马马刺、福克斯马刺、KD离队、弗拉格状元等）----------
+  const REAL_ROSTERS = {
+    '湖人':   [{n:'卢卡·东契奇',r:95},{n:'奥斯汀·里夫斯',r:84},{n:'勒布朗·詹姆斯',r:93},{n:'八村垒',r:81},{n:'德安德烈·艾顿',r:83}],
+    '凯尔特人':[{n:'德里克·怀特',r:85},{n:'安芬尼·西蒙斯',r:82},{n:'杰伦·布朗',r:90},{n:'杰森·塔图姆',r:93},{n:'尼姆哈斯·克塔',r:77}],
+    '勇士':   [{n:'斯蒂芬·库里',r:94},{n:'布兰丁·波杰姆斯基',r:80},{n:'吉米·巴特勒',r:88},{n:'德雷蒙德·格林',r:83},{n:'阿尔·霍福德',r:80}],
+    '公牛':   [{n:'约什·吉迪',r:82},{n:'科比·怀特',r:83},{n:'阿尤·多苏姆',r:79},{n:'马塔斯·布泽利斯',r:80},{n:'尼古拉·武切维奇',r:83}],
+    '马刺':   [{n:'德阿龙·福克斯',r:89},{n:'斯蒂芬·卡斯尔',r:82},{n:'德文·瓦塞尔',r:82},{n:'哈里森·巴恩斯',r:79},{n:'维克托·文班亚马',r:94}],
+    '热火':   [{n:'戴维昂·米切尔',r:79},{n:'泰勒·希罗',r:87},{n:'诺曼·鲍威尔',r:83},{n:'安德鲁·威金斯',r:83},{n:'巴姆·阿德巴约',r:88}],
+    '雄鹿':   [{n:'凯文·波特',r:79},{n:'加里·特伦特',r:79},{n:'凯尔·库兹马',r:82},{n:'扬尼斯·阿德托昆博',r:96},{n:'迈尔斯·特纳',r:84}],
+    '掘金':   [{n:'贾马尔·穆雷',r:87},{n:'克里斯蒂安·布劳恩',r:82},{n:'卡梅伦·约翰逊',r:82},{n:'阿隆·戈登',r:84},{n:'尼古拉·约基奇',r:98}],
+    '76人':   [{n:'泰瑞斯·马克西',r:89},{n:'贾里德·麦凯恩',r:81},{n:'保罗·乔治',r:86},{n:'VJ·埃奇科姆',r:78},{n:'乔尔·恩比德',r:92}],
+    '快船':   [{n:'詹姆斯·哈登',r:88},{n:'布拉德利·比尔',r:84},{n:'科怀·伦纳德',r:90},{n:'约翰·科林斯',r:81},{n:'伊维察·祖巴茨',r:84}],
+    '太阳':   [{n:'杰伦·格林',r:84},{n:'德文·布克',r:92},{n:'迪龙·布鲁克斯',r:80},{n:'罗伊斯·奥尼尔',r:78},{n:'马克·威廉姆斯',r:81}],
+    '篮网':   [{n:'埃格尔·德明',r:75},{n:'卡姆·托马斯',r:82},{n:'迈克尔·波特',r:84},{n:'诺亚·克拉里',r:76},{n:'尼克·克拉克斯顿',r:81}],
+    '尼克斯': [{n:'杰伦·布伦森',r:91},{n:'米卡尔·布里奇斯',r:84},{n:'OG·阿努诺比',r:84},{n:'卡尔-安东尼·唐斯',r:89},{n:'米切尔·罗宾逊',r:79}],
+    '独行侠': [{n:'德安吉洛·拉塞尔',r:81},{n:'克莱·汤普森',r:82},{n:'库珀·弗拉格',r:83},{n:'安东尼·戴维斯',r:92},{n:'德雷克·莱夫利',r:81}],
+    '森林狼': [{n:'迈克·康利',r:79},{n:'安东尼·爱德华兹',r:93},{n:'杰登·麦克丹尼尔斯',r:83},{n:'朱利叶斯·兰德尔',r:86},{n:'鲁迪·戈贝尔',r:85}],
+    '鹈鹕':   [{n:'德章泰·穆雷',r:84},{n:'乔丹·普尔',r:83},{n:'特雷·墨菲',r:83},{n:'锡安·威廉姆斯',r:88},{n:'伊夫·米西',r:78}],
+  };
   const GEN_FIRST = ['马库斯','德文','贾伦','泰勒','凯尔','布兰登','达柳斯','杰登','卡梅伦','伊森','泰瑞斯','肖恩','科迪','马利克','贾马尔','德里克','特雷','奥斯汀','以赛亚','卡尔顿','贾巴里','多米尼克','雷吉','克林特','奥比'];
   const GEN_LAST  = ['威廉姆斯','约翰逊','史密斯','布朗','戴维斯','托马斯','杰克逊','怀特','哈里斯','刘易斯','沃克','罗宾逊','卡特','格林','米切尔','莫里斯','杨','福克斯','爱德华兹','班克斯','里德','贝尔','库珀','华盛顿','邓恩'];
   // 位置基础数据画像（评级≈99 顶配时的场均，按评级与位置缩放）
@@ -740,11 +759,13 @@ const App = (() => {
   function genOppLineup(pow) {
     const sorted = ALL_PLAYERS.slice().sort((a, b) => a.rating - b.rating);
     const t = Math.max(0, Math.min(1, (pow - 90) / 700));
+    const posOrder = ['PG', 'SG', 'SF', 'PF', 'C'];
     const out = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 5; i++) {
       const center = Math.floor(t * (sorted.length - 1));
       const j = Math.max(0, Math.min(sorted.length - 1, center + (Math.floor(Math.random() * 7) - 3)));
-      out.push(sorted[j]);
+      const p = sorted[j];
+      out.push({ cn: p.cn, rating: p.rating, pos: posOrder[i] });
     }
     return out;
   }
@@ -755,8 +776,12 @@ const App = (() => {
         ? playerSeriesOpponent(team)
         : pickAiTeam(team);
       if (lt) {
-        const lineup = lt.roster.slice().sort((a, b) => b.rating - a.rating).slice(0, 3)
-          .map(r => ({ cn: r.name, rating: r.rating }));
+        // 完整 5 人首发，按 PG→C 位置顺序展示
+        const order = { PG: 0, SG: 1, SF: 2, PF: 3, C: 4 };
+        const lineup = lt.roster.slice()
+          .sort((a, b) => (order[a.pos] ?? 9) - (order[b.pos] ?? 9))
+          .slice(0, 5)
+          .map(r => ({ cn: r.name, rating: r.rating, pos: r.pos }));
         return { name: lt.name, power: lt.str, lineup: lineup, leagueId: lt.id };
       }
     }
@@ -768,11 +793,27 @@ const App = (() => {
   // 联盟模拟系统（单人）：球队 / 球员 / 战绩 / 数据 / 对阵 / 奖项 / 选秀
   // =========================================================
   function aiStrengthBase(season) { return 150 + (season - 1) * 62; }
-  // 生成一支 AI 球队（含阵容与数据）
+  // 生成一支 AI 球队（优先采用 2025-26 真实首发名单，评级随赛季成长）
   function buildAiTeam(id, name, season) {
     const base = aiStrengthBase(season);
+    const baseName = String(name).replace(/队$/, '');
+    const real = REAL_ROSTERS[baseName];
+    if (real) {
+      const grow = (season - 1) * 1.2;  // 真实名单评级随赛季缓慢成长
+      const roster = POSITIONS.map((pos, i) => {
+        const src = real[i] || real[real.length - 1];
+        const rating = Math.max(74, Math.min(99, Math.round(src.r + grow)));
+        return { name: src.n, pos: pos.key, rating, isRookie: false,
+          stats: genStatLine(rating, pos.key, name + src.n + season + i) };
+      });
+      // 战力：以赛季为锚，按真实名单整体强度（均分 86 为基准）微调，保留随机抖动
+      const avg = roster.reduce((s, p) => s + p.rating, 0) / roster.length;
+      const quality = avg / (86 + grow);
+      const str = Math.round(base * quality * (0.9 + Math.random() * 0.2));
+      return { id, name, isPlayer: false, str, w: 0, l: 0, seed: 0, roster };
+    }
+    // 兜底：无真实名单时随机生成
     const str = Math.round(base * (0.74 + Math.random() * 0.72));
-    // 由战力推断阵容平均评级
     const avgRating = Math.max(78, Math.min(99, Math.round(80 + (str - base * 0.74) / (base * 0.72) * 17)));
     const roster = POSITIONS.map((pos, i) => {
       const rating = Math.max(74, Math.min(99, avgRating + Math.floor(Math.random() * 9) - 4));
@@ -1369,11 +1410,13 @@ const App = (() => {
       return;
     }
     if (!team.nextOpp && !team.won) team.nextOpp = genOpponent(team);
+    // 兼容旧存档：阵容不足 5 人则按新规则重新生成
+    if (team.nextOpp && (!team.nextOpp.lineup || team.nextOpp.lineup.length < 5)) team.nextOpp = genOpponent(team);
     const opp = team.nextOpp;
     const myPow = teamPower(team);
     if (opp && prev) {
       const wc = Math.round(matchWinChance(myPow, opp.power) * 100);
-      const lineup = opp.lineup.map(p => `${esc(p.cn)}<span class="star">★${p.rating}</span>`).join('、');
+      const lineup = opp.lineup.map(p => `${p.pos ? '<b style="color:var(--muted)">' + p.pos + '</b> ' : ''}${esc(p.cn)}<span class="star">★${p.rating}</span>`).join('、');
       const tag = (gameMode === 'single' && team.seasonPhase === 'playoff')
         ? `<span style="color:var(--gold)">${PLAYOFF_ROUND_NAMES[team.playoffRound] || '季后赛'} · 系列赛 ${team.seriesWins}-${team.seriesLosses}</span>` : '';
       prev.innerHTML = `
