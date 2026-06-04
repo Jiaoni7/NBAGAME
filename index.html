@@ -788,42 +788,42 @@
 <body>
 
 <!-- 全屏切换按钮（PWA 主屏启动时自动隐藏） -->
-<button id="fs-btn" class="fs-btn" onclick="App.toggleFullscreen()" title="进入全屏" aria-label="全屏">⛶</button>
+<button id="fs-btn" class="fs-btn" onclick="App.toggleFullscreen()" title="进入全屏" data-i18n-title="进入全屏" aria-label="全屏">⛶</button>
 
 
 <!-- ===================== 一级：登录 / 注册 ===================== -->
 <div id="screen-login" class="screen active">
   <div class="brand">
     <div class="logo">🏀 BASKETBALL DYNASTY</div>
-    <h1>王朝传奇</h1>
-    <div class="sub">打造你的 NBA 篮球帝国</div>
+    <h1 data-i18n="王朝传奇">王朝传奇</h1>
+    <div class="sub" data-i18n="打造你的 NBA 篮球帝国">打造你的 NBA 篮球帝国</div>
   </div>
   <div class="card">
     <div class="tabs">
-      <button class="tab active" id="tab-login" onclick="App.switchAuthTab('login')">登 录</button>
-      <button class="tab" id="tab-register" onclick="App.switchAuthTab('register')">注 册</button>
+      <button class="tab active" id="tab-login" onclick="App.switchAuthTab('login')" data-i18n="登 录">登 录</button>
+      <button class="tab" id="tab-register" onclick="App.switchAuthTab('register')" data-i18n="注 册">注 册</button>
     </div>
     <div class="field">
-      <label>经理名 / 用户名</label>
-      <input type="text" id="auth-user" maxlength="12" placeholder="输入用户名..." autocomplete="off">
+      <label data-i18n="经理名 / 用户名">经理名 / 用户名</label>
+      <input type="text" id="auth-user" maxlength="12" placeholder="输入用户名..." data-i18n-ph="输入用户名..." autocomplete="off">
     </div>
     <div class="field">
-      <label>密码</label>
-      <input type="password" id="auth-pass" maxlength="20" placeholder="输入密码...">
+      <label data-i18n="密码">密码</label>
+      <input type="password" id="auth-pass" maxlength="20" placeholder="输入密码..." data-i18n-ph="输入密码...">
     </div>
     <div class="field" id="auth-confirm-field" style="display:none;">
-      <label>确认密码</label>
-      <input type="password" id="auth-confirm" maxlength="20" placeholder="再次输入密码...">
+      <label data-i18n="确认密码">确认密码</label>
+      <input type="password" id="auth-confirm" maxlength="20" placeholder="再次输入密码..." data-i18n-ph="再次输入密码...">
     </div>
     <div class="msg" id="auth-msg"></div>
-    <button class="btn" id="auth-submit" onclick="App.submitAuth()">登 录</button>
-    <div class="social-divider"><span>或使用第三方账号登录</span></div>
+    <button class="btn" id="auth-submit" onclick="App.submitAuth()" data-i18n="登 录">登 录</button>
+    <div class="social-divider"><span data-i18n="或使用第三方账号登录">或使用第三方账号登录</span></div>
     <div class="social-row">
       <button class="social-btn wx" onclick="App.socialLogin('wechat')">
-        <span class="si">💬</span> 微信登录
+        <span class="si">💬</span> <span data-i18n="微信登录">微信登录</span>
       </button>
       <button class="social-btn qq" onclick="App.socialLogin('qq')">
-        <span class="si">🐧</span> QQ 登录
+        <span class="si">🐧</span> <span data-i18n="QQ 登录">QQ 登录</span>
       </button>
     </div>
   </div>
@@ -832,76 +832,76 @@
 <!-- ===================== 二级：单 / 双人模式 ===================== -->
 <div id="screen-mode" class="screen">
   <div class="brand">
-    <h1>选择模式</h1>
-    <div class="sub">单人养成 · 双人对战</div>
+    <h1 data-i18n="选择模式">选择模式</h1>
+    <div class="sub" data-i18n="单人养成 · 双人对战">单人养成 · 双人对战</div>
   </div>
   <div class="card wide">
     <div class="opt-grid cols2">
       <div class="opt" onclick="App.chooseMode('single')">
         <div class="ico">🏀</div>
-        <div class="ttl">单人模式</div>
-        <div class="dsc">独自经营球队，自由放置养成<br>可存档，随时继续你的王朝之路</div>
-        <div class="tag">支持存档</div>
+        <div class="ttl" data-i18n="单人模式">单人模式</div>
+        <div class="dsc" data-i18n="独自经营球队，自由放置养成<br>可存档，随时继续你的王朝之路">独自经营球队，自由放置养成<br>可存档，随时继续你的王朝之路</div>
+        <div class="tag" data-i18n="支持存档">支持存档</div>
       </div>
       <div class="opt" onclick="App.chooseMode('dual')">
         <div class="ico">🆚</div>
-        <div class="ttl">双人对战</div>
-        <div class="dsc">同屏分左右两队，同步经营<br>率先达成夺冠目标者获胜</div>
-        <div class="tag">竞速对决</div>
+        <div class="ttl" data-i18n="双人对战">双人对战</div>
+        <div class="dsc" data-i18n="同屏分左右两队，同步经营<br>率先达成夺冠目标者获胜">同屏分左右两队，同步经营<br>率先达成夺冠目标者获胜</div>
+        <div class="tag" data-i18n="竞速对决">竞速对决</div>
       </div>
     </div>
   </div>
   <div style="margin-top:18px;">
-    <button class="btn ghost sm" onclick="App.goto('login')">← 退出登录</button>
+    <button class="btn ghost sm" onclick="App.goto('login')" data-i18n="← 退出登录">← 退出登录</button>
   </div>
 </div>
 
 <!-- ===================== 三级：新档 / 旧档 / 规则 ===================== -->
 <div id="screen-archive" class="screen">
   <div class="brand">
-    <h1 id="archive-title">开始游戏</h1>
-    <div class="sub" id="archive-sub">新的赛季，新的传奇</div>
+    <h1 id="archive-title" data-i18n="开始游戏">开始游戏</h1>
+    <div class="sub" id="archive-sub" data-i18n="新的赛季，新的传奇">新的赛季，新的传奇</div>
   </div>
   <div class="card wide">
     <div class="opt-grid cols3">
       <div class="opt" onclick="App.goto('difficulty')">
         <div class="ico">✨</div>
-        <div class="ttl">新档</div>
-        <div class="dsc">创建新球队<br>选择难度开启新征程</div>
+        <div class="ttl" data-i18n="新档">新档</div>
+        <div class="dsc" data-i18n="创建新球队<br>选择难度开启新征程">创建新球队<br>选择难度开启新征程</div>
       </div>
       <div class="opt" id="opt-load" onclick="App.openLoadList()">
         <div class="ico">💾</div>
-        <div class="ttl">旧档</div>
-        <div class="dsc" id="load-desc">继续之前的存档</div>
+        <div class="ttl" data-i18n="旧档">旧档</div>
+        <div class="dsc" id="load-desc" data-i18n="继续之前的存档">继续之前的存档</div>
       </div>
       <div class="opt" onclick="App.showRules()">
         <div class="ico">📖</div>
-        <div class="ttl">游戏规则</div>
-        <div class="dsc">了解玩法与操作</div>
+        <div class="ttl" data-i18n="游戏规则">游戏规则</div>
+        <div class="dsc" data-i18n="了解玩法与操作">了解玩法与操作</div>
       </div>
     </div>
     <!-- 存档列表 -->
     <div id="load-list" style="display:none;">
-      <div class="section-title">📂 选择存档</div>
+      <div class="section-title" data-i18n="📂 选择存档">📂 选择存档</div>
       <div id="load-list-body"></div>
     </div>
   </div>
   <div style="margin-top:18px;">
-    <button class="btn ghost sm" onclick="App.goto('mode')">← 返回模式选择</button>
+    <button class="btn ghost sm" onclick="App.goto('mode')" data-i18n="← 返回模式选择">← 返回模式选择</button>
   </div>
 </div>
 
 <!-- ===================== 四级：难度选择（新档） ===================== -->
 <div id="screen-difficulty" class="screen">
   <div class="brand">
-    <h1>选择难度</h1>
-    <div class="sub">难度影响起步资金、成本与夺冠目标</div>
+    <h1 data-i18n="选择难度">选择难度</h1>
+    <div class="sub" data-i18n="难度影响起步资金、成本与夺冠目标">难度影响起步资金、成本与夺冠目标</div>
   </div>
   <div class="card wide">
     <div class="opt-grid cols3" id="diff-grid"></div>
   </div>
   <div style="margin-top:18px;">
-    <button class="btn ghost sm" onclick="App.goto('archive')">← 返回</button>
+    <button class="btn ghost sm" onclick="App.goto('archive')" data-i18n="← 返回">← 返回</button>
   </div>
 </div>
 
@@ -909,7 +909,7 @@
 <div id="screen-game" class="screen">
   <div id="game-topbar">
     <div class="gt-left">
-      <span class="gt-title">🏀 王朝传奇</span>
+      <span class="gt-title" data-i18n="🏀 王朝传奇">🏀 王朝传奇</span>
       <span class="gt-user" id="game-user"></span>
       <span class="gt-user" id="game-diff"></span>
     </div>
@@ -923,20 +923,20 @@
 <div id="victory">
   <div class="victory-card">
     <div class="trophy">🏆</div>
-    <h2 id="victory-title">总冠军！</h2>
+    <h2 id="victory-title" data-i18n="总冠军！">总冠军！</h2>
     <p id="victory-desc"></p>
-    <button class="btn" onclick="App.backToMenuFromVictory()">返回菜单</button>
+    <button class="btn" onclick="App.backToMenuFromVictory()" data-i18n="返回菜单">返回菜单</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <!-- PWA 安装按钮（满足条件时自动出现） -->
-<button id="pwa-install-btn" class="pwa-install">📲 安装到主屏幕</button>
+<button id="pwa-install-btn" class="pwa-install" data-i18n="📲 安装到主屏幕">📲 安装到主屏幕</button>
 <!-- iOS Safari 手动安装提示条 -->
 <div id="ios-install-tip" class="ios-tip">
-  <span>点击底部 <b>分享 ⬆️</b> → 选择「<b>添加到主屏幕</b>」即可安装</span>
-  <button onclick="document.getElementById('ios-install-tip').classList.remove('show')">知道了</button>
+  <span data-i18n="点击底部 <b>分享 ⬆️</b> → 选择「<b>添加到主屏幕</b>」即可安装">点击底部 <b>分享 ⬆️</b> → 选择「<b>添加到主屏幕</b>」即可安装</span>
+  <button onclick="document.getElementById('ios-install-tip').classList.remove('show')" data-i18n="知道了">知道了</button>
 </div>
 
 <script>
