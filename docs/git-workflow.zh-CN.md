@@ -1,32 +1,30 @@
-# Git 协作流程（Fork 模式）
+# Git 协作流程（Fork + PR 模式）
 
-这份文档面向当前仓库的协作方式：
+这份文档面向当前仓库的默认协作方式：
 
-- `origin` = 本地 fork：`git@github.com:Raint-s/NBAGAME.git`
-- `upstream` = 上游原始仓库：`git@github.com:Jiaoni7/NBAGAME.git`
+- `origin` = 个人 fork：默认开发与 push 目标
+- `upstream` = 上游共享仓库：需要对外同步时的 PR 目标
 
-当前建议把 `origin` 视为你的主开发仓库，把 `upstream` 视为上游同步来源。
+当前推荐模式是：
 
-## 一、先讲清楚推荐原则
+- 日常开发在 `origin` 的分支完成
+- 需要共享、审阅或并入上游时，再从 `origin` 向 `upstream` 发 PR
+
+## 一、推荐原则
 
 ### 1. 日常开发默认在 `origin`
 
-因为你是主要开发者，最稳的方式是：
-
-- 日常开发、提交、推送，默认都走你自己的 `origin`
-- 朋友那边如果有新改动，再从 `upstream` 同步回来
-
 这样做的好处是：
 
-- 你不会误操作朋友的主仓库
-- 你的开发节奏不依赖别人仓库权限
-- 出问题时回滚、审计、复盘都更清楚
+- 避免误操作上游主仓库
+- 开发节奏不依赖上游仓库权限
+- 出问题时更容易回滚、复盘和审阅
 
 ### 2. `main` 尽量保持可运行
 
 不要把半成品、调试残留、私有辅助文件直接堆进 `main`。
 
-### 3. 开发用分支，稳定后再回 `main`
+### 3. 从当前阶段开始，新的非小型工作默认走分支
 
 推荐分支前缀：
 
@@ -37,14 +35,15 @@
 
 补充说明：
 
-- 如果你当前本地暂时只有 `main`，这不是错误，说明前一阶段主要是在主线上完成仓库基线整理
-- 从当前开始，除非常小的文档修正外，建议所有新工作都先开分支，再 push 到 `origin` 并按需要发 PR
+- 当前本地历史里已经有一批直接落在 `main` 的仓库基线整理提交，这可以视为早期基线，不必回滚
+- 从当前开始，除非常小的文档修正外，建议所有新工作都先开分支，再 push 到 `origin`
 
 ### 4. 私有工作资产永远不入库
 
 包括但不限于：
 
 - `skills/`
+- `skills.md`
 - `.codex/`
 - `.claude/`
 - 私有调研
@@ -54,7 +53,7 @@
 
 提交前先看 `git status`。
 
-## 二、你自己日常开发的标准流程
+## 二、开始一个新工作
 
 ### 场景 A：开始做一个新功能
 
@@ -73,15 +72,7 @@ git commit -m "feat: describe the change"
 git push -u origin feat/your-feature-name
 ```
 
-如果你当前项目还是你自己主控、暂时不走 PR，也可以在确认没问题后合并回 `main`：
-
-```bash
-git switch main
-git merge --no-ff feat/your-feature-name
-git push origin main
-```
-
-## 三、修复问题时的流程
+### 场景 B：修复问题
 
 ```bash
 git switch main
@@ -98,151 +89,56 @@ git commit -m "fix: describe the bugfix"
 git push -u origin fix/short-description
 ```
 
-## 四、朋友在 `upstream` 有更新时怎么同步
-
-先拉上游信息：
-
-```bash
-git fetch upstream
-```
-
-先看看差异：
-
-```bash
-git log --oneline main..upstream/main
-```
-
-如果你确认要同步：
-
-```bash
-git switch main
-git pull --ff-only origin main
-git merge upstream/main
-git push origin main
-```
-
-如果有冲突：
-
-1. 解决冲突
-2. 本地验证
-3. 再提交合并结果
-4. 再推到 `origin/main`
-
-如果你想更保守一点，也可以先建同步分支：
-
-```bash
-git switch -c chore/sync-upstream-main
-git merge upstream/main
-```
-
-确认无误后再合回 `main`。
-
-## 五、你的改动怎么给朋友
+## 三、改动怎么共享出去
 
 有两种常见方式。
 
-### 方式 1：朋友直接看你的 fork
+### 方式 1：先在 `origin` 上共享分支
 
-你推到：
+适用于：
 
-```bash
-git push origin main
-```
+- 先给团队成员看 diff
+- 先保留在个人 fork 中继续迭代
+- 暂时还不准备并入上游
 
-或者功能分支：
+命令：
 
 ```bash
 git push -u origin feat/your-feature-name
 ```
 
-朋友从你的仓库看代码、拉代码、或者按需合并。
+### 方式 2：从 `origin` 向 `upstream` 发 PR
 
-### 方式 2：你向 `upstream` 发 PR
+适用于：
 
-适合朋友的仓库是“官方主仓库”的情况。
+- 希望让上游仓库审阅并合并
+- 希望把阶段性成果正式同步回共享主线
 
-流程是：
+推荐流程：
 
-1. 你先把改动推到自己的 `origin`
-2. 从 `origin` 对 `upstream` 发 Pull Request
-3. 朋友审核后合并
+1. 本地在分支完成开发
+2. push 到 `origin`
+3. 从 `origin:<branch>` 向 `upstream:main` 发 Pull Request
+4. 审阅通过后再合并
 
-如果未来要正式上线、外部协作也增加，建议尽量收敛到这种方式。
-
-## 六、Pull Request 具体流程
-
-如果朋友的仓库被当作“主仓库”，那么推荐默认流程就是：
-
-1. 你在本地开分支开发
-2. 推到你自己的 `origin`
-3. 从你的 fork 向朋友的 `upstream` 发 Pull Request
-4. 朋友审核并合并
-
-### 当前这一次怎么做
-
-因为当前仓库已经在你的 `main` 上积累了一批“仓库治理 + 文档体系 + 结构整理”改动，所以这一次可以作为一次汇总 PR：
-
-- head repository: `Raint-s/NBAGAME`
-- head branch: `main`
-- base repository: `Jiaoni7/NBAGAME`
-- base branch: `main`
-
-这适合作为“把你 fork 中当前整理成果同步回朋友主仓库”的首个 PR。
-
-但从这次之后，建议尽量不要长期继续用 `main` 直接发 PR，而是改成分支 PR。
-
-### 后续日常推荐流程
-
-```bash
-git switch main
-git pull --ff-only origin main
-git switch -c feat/your-feature-name
-```
-
-改完后：
-
-```bash
-git add <files>
-git commit -m "feat: describe the change"
-git push -u origin feat/your-feature-name
-```
-
-然后从：
-
-- `Raint-s:feat/your-feature-name`
-
-向：
-
-- `Jiaoni7:main`
-
-发 Pull Request。
+## 四、Pull Request 的推荐做法
 
 ### 网页方式
 
-如果不走命令行，网页方式始终可用。
-
-流程：
-
 1. 推送分支到 `origin`
-2. 打开你的 fork：`Raint-s/NBAGAME`
+2. 打开个人 fork
 3. 点击 `Compare & pull request`
 4. 选择：
-   - base repository: `Jiaoni7/NBAGAME`
+   - base repository: 上游仓库
    - base branch: `main`
-   - head repository: `Raint-s/NBAGAME`
-   - compare branch: 你的分支
+   - head repository: 个人 fork
+   - compare branch: 当前工作分支
 5. 填写标题和说明
 6. 创建 PR
 
 ### GitHub CLI 方式
 
-当前本机已安装 `gh`，但在使用前需要先登录：
-
-```bash
-gh auth login
-```
-
-登录后可以直接在本地创建 PR。
+如果本机已登录 `gh`，可以直接创建 PR。
 
 示例：
 
@@ -250,16 +146,10 @@ gh auth login
 gh pr create --repo Jiaoni7/NBAGAME --base main --head Raint-s:feat/your-feature-name
 ```
 
-如果是这一次的汇总 PR，则可以用：
-
-```bash
-gh pr create --repo Jiaoni7/NBAGAME --base main --head Raint-s:main
-```
-
 ### 建议的 PR 标题风格
 
 - `chore: sync repository hygiene baseline`
-- `docs: add project documentation workflow`
+- `docs: refine collaboration workflow docs`
 - `refactor: complete Phase 2 light structure reorg`
 - `feat: ...`
 - `fix: ...`
@@ -279,15 +169,40 @@ gh pr create --repo Jiaoni7/NBAGAME --base main --head Raint-s:main
 - any caveats or follow-up items
 ```
 
-### 你们当前最适合的策略
+## 五、上游仓库有更新时怎么同步
 
-对你们现在这种“你主开发、朋友偏产品”的模式，我建议：
+先拉上游信息：
 
-- 日常开发和自测：在你的 `origin` 分支完成
-- 准备让朋友审核或并入主仓库时：通过 PR 进入 `upstream`
-- 不要频繁直接往 `upstream/main` 推代码
+```bash
+git fetch upstream
+```
 
-## 七、提交前固定检查
+先看看差异：
+
+```bash
+git log --oneline main..upstream/main
+```
+
+如果确认要同步，推荐优先走保守流程：
+
+```bash
+git switch main
+git pull --ff-only origin main
+git switch -c chore/sync-upstream-main
+git merge upstream/main
+```
+
+后续步骤：
+
+1. 解决冲突
+2. 本地验证
+3. 提交合并结果
+4. push 到 `origin`
+5. 确认稳定后再合回 `main`
+
+如果同步内容非常简单，也可以直接在 `main` 上整合，但仍应先完成本地验证。
+
+## 六、提交前固定检查
 
 每次提交前都做这几步：
 
@@ -303,44 +218,35 @@ git diff --staged
 - 没有日志、缓存、临时脚本
 - 没有无关改动
 
-## 八、什么时候 push 到 `main`
-
-满足这几个条件再推：
-
-- 功能至少本地跑过一次
-- 关键流程没坏
-- 文档和命令没有过期
-- 没有私有资产混进提交
-
-## 九、什么时候不要直接改 `main`
+## 七、什么时候不要直接改 `main`
 
 这些情况建议一定开分支：
 
 - 改玩法逻辑
 - 改存档逻辑
-- 改支付/登录/联网相关逻辑
+- 改支付、登录、联网相关逻辑
 - 改打包流程
 - 改大量 UI 或文案
+- 改目录结构、文档入口或协作流程
 
-## 十、推荐的团队约定
+## 八、当前阶段的团队约定
 
-结合你们现在“你主开发、朋友偏产品”的模式，我建议：
+结合当前“小团队协作优先、兼容外部贡献”的目标，建议执行下面的长期规则：
 
-1. 你负责代码分支、提交、同步
-2. 朋友主要提需求、验收、在必要时查看 PR 或对比 diff
+1. 代码开发默认在个人 fork 的工作分支完成
+2. 上游仓库作为共享整合目标，而不是日常直接开发入口
 3. 任何准备上线的版本，都先走一次发布检查清单
+4. 中大改动先写 spec 或 plan，再进入实现
 
-## 十一、长期建议
+## 九、长期建议
 
-在项目还不大时，当前 fork 模式够用。
+在项目还不大时，当前 fork 模式已经够用。
 
-但如果后面出现下面这些情况：
+如果后面出现下面这些情况，再考虑升级流程：
 
-- 海外版本开始并行
-- 发布频率变高
-- 朋友也开始频繁改代码
+- 发布频率明显变高
+- 有多人开始频繁改代码
 - 需要更严格的版本追踪
-
-建议再升级为更正式的 PR + release 分支流程。
+- 需要 release 分支或更正式的发布节奏
 
 当前阶段先不用上太重的流程，先把规则稳定执行起来最重要。

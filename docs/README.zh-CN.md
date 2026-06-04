@@ -1,10 +1,38 @@
 # 文档索引
 
-这份索引用来说明仓库里有哪些公开文档、各自负责什么、什么时候需要更新。
+这份索引是公开文档的总入口，用来回答三个问题：
+
+- 当前项目是什么状态
+- 新工作该先看什么、改什么
+- 文档应该新增到哪里，而不是散落出新的类别
+
+## 建议阅读顺序
+
+### 1. 第一次接触仓库
+
+- [README.md](../README.md)
+- [architecture/current-architecture.zh-CN.md](architecture/current-architecture.zh-CN.md)
+- [project-status.zh-CN.md](project-status.zh-CN.md)
+
+### 2. 准备开始开发
+
+- [../DEVELOPMENT.md](../DEVELOPMENT.md)
+- [git-workflow.zh-CN.md](git-workflow.zh-CN.md)
+
+### 3. 准备发布或打包
+
+- [release-checklist.md](release-checklist.md)
+- [platforms/android-packaging.zh-CN.md](platforms/android-packaging.zh-CN.md)
 
 ## 文档分类
 
-### 1. 项目状态
+### 1. 项目入口与结构
+
+- [architecture/current-architecture.zh-CN.md](architecture/current-architecture.zh-CN.md)
+  - 用途：解释当前运行模型、目录职责、结构变更应如何决策
+  - 何时更新：运行结构、文件放置规则或平台边界变化时
+
+### 2. 项目状态
 
 - [project-status.zh-CN.md](project-status.zh-CN.md)
   - 用途：记录当前阶段、已完成事项、已知风险、下一步重点
@@ -14,10 +42,10 @@
   - 用途：记录重要变更，不要求逐条抄写每个 commit
   - 何时更新：完成一个可说明的阶段性改动后
 
-### 2. 协作与发布
+### 3. 协作与发布
 
 - [git-workflow.zh-CN.md](git-workflow.zh-CN.md)
-  - 用途：说明 fork 模式下的 pull / push / sync 流程
+  - 用途：说明当前 fork 模式下的 branch / push / PR / sync 流程
   - 何时更新：协作模式或分支策略变化时
 
 - [release-checklist.md](release-checklist.md)
@@ -28,25 +56,28 @@
   - 用途：记录 Android / Capacitor 打包相关说明
   - 何时更新：打包流程、平台要求或发布方式变化时
 
-### 3. 迭代记录
+### 4. 迭代记录
 
 - [iterations/2026-06-03-iteration-1.1.zh-CN.md](iterations/2026-06-03-iteration-1.1.zh-CN.md)
   - 用途：归档公开可见的版本迭代说明、功能更新摘要和实现范围
   - 何时更新：完成一轮值得单独说明的版本迭代后，新增一份新文档，不覆盖旧记录
 
-### 4. 审计记录
+### 5. 审计记录
 
 - [audits/2026-06-02-initial-code-audit.zh-CN.md](audits/2026-06-02-initial-code-audit.zh-CN.md)
   - 用途：归档阶段性代码审计结论
   - 何时更新：完成新的正式审计后，新增一份新文档，不覆盖旧记录
 
-### 5. 设计与计划
+### 6. 设计与计划
 
 - [superpowers/specs/2026-06-02-repo-hygiene-design.md](superpowers/specs/2026-06-02-repo-hygiene-design.md)
   - 用途：记录仓库规范化设计
 
 - [superpowers/specs/2026-06-02-project-docs-workflow-design.md](superpowers/specs/2026-06-02-project-docs-workflow-design.md)
   - 用途：记录项目状态、计划、审计、变更文档体系设计
+
+- [superpowers/specs/2026-06-03-collaboration-docs-foundation-design.md](superpowers/specs/2026-06-03-collaboration-docs-foundation-design.md)
+  - 用途：记录协作文档入口、团队中立口吻和架构说明入口的整理设计
 
 - [superpowers/plans/README.zh-CN.md](superpowers/plans/README.zh-CN.md)
   - 用途：说明计划文档该怎么写、什么时候写
@@ -62,23 +93,26 @@
 
 ## 最小更新规则
 
-为了让仓库状态始终可读，建议至少遵守下面 4 条：
+为了让仓库状态始终可读，建议至少遵守下面 5 条：
 
-1. 做非小型改动前，先写 spec 或 plan
+1. 做中大改动前，先判断是否需要写 spec 或 plan
 2. 做完阶段性改动后，更新 `project-status.zh-CN.md`
 3. 做完值得对外说明的改动后，更新 `changelog.zh-CN.md`
 4. 做完正式审计后，在 `docs/audits/` 新增一份记录，并同步状态文档
+5. 公开文档优先复用现有分类，不随意创建新的文档类型
 
 ## 语言约定
 
-当前团队高频使用的内部工程文档，默认采用中文优先：
+当前团队高频使用的工程文档，默认采用中文优先：
 
 - `DEVELOPMENT.md`
 - `CONTRIBUTING.md`
+- `docs/README.zh-CN.md`
 - `docs/release-checklist.md`
 - `docs/git-workflow.zh-CN.md`
 - `docs/project-status.zh-CN.md`
 - `docs/changelog.zh-CN.md`
+- `docs/architecture/current-architecture.zh-CN.md`
 
 对外说明文档可以根据需要保留英文或后续补充双语版本。
 
@@ -87,6 +121,7 @@
 下面这些仍然属于本地私有工作资产：
 
 - `skills/`
+- `skills.md`
 - `.codex/`
 - `.claude/`
 - 私有提示词

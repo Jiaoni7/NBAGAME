@@ -25,6 +25,8 @@ Thumbs.db
 
 # Local private working assets
 skills/
+/skills.md
+/SKILLS.md
 .codex/
 .claude/
 notes-private/
